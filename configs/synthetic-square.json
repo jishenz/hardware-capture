@@ -1,0 +1,16 @@
+{
+  "extends": "pulse.json",
+  "input": {
+    "kind": "csv",
+    "path": "../hardware_capture/resources/captures/synthetic_square.csv"
+  },
+  "demodulation": {
+    "frequency_hz": 2000000.0,
+    "cutoff_hz": 400000,
+    "filter_order": 4,
+    "q_sign": 1
+  },
+  "calibration": {
+    "rabi_at_100_hz": 100000
+  }
+}

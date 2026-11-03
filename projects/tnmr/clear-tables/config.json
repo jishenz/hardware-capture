@@ -1,0 +1,8 @@
+{
+  "extends": "../../../configs/lab.example.json",
+  "tnmr": {
+    "action": "clear_tables",
+    "clear_tables": [],
+    "save_path": "../../../outputs/tnmr_cleaned.tnt"
+  }
+}

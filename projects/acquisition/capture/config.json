@@ -1,0 +1,8 @@
+{
+  "extends": "../../../configs/lab.example.json",
+  "input": {
+    "kind": "scope",
+    "shots": 1,
+    "read_current": false
+  }
+}

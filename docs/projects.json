@@ -1,0 +1,262 @@
+[
+  {
+    "folder": "acquisition/capture",
+    "old": "oscilloscope_connection_pipeline",
+    "workflow": "capture",
+    "title": "Raw RF capture",
+    "inputs": "A configured VISA resource/channel and acquisition time window; input.shots and optional shot_command.",
+    "assumptions": "The scope must already have suitable sampling, trigger, voltage scale and memory settings. Raw samples must resolve the RF carrier. read_current=true reads the existing record; otherwise the scope is armed for a new shot. shot_command is an optional trusted local shell command executed after arming.",
+    "outputs": "One time_s, chanN_voltage_V CSV per shot.",
+    "base": "lab.example.json"
+  },
+  {
+    "folder": "calibration/square",
+    "old": null,
+    "workflow": "calibrate-square",
+    "title": "Square pulse amplitude calibration",
+    "inputs": "Raw RF CSV or scope capture; demodulation frequency/cutoff/Q sign; known calibration.rabi_at_100_hz.",
+    "assumptions": "The square reference was commanded at amplitude 100 and has a flat plateau with baseline samples outside it. The median of the middle plateau defines volts-to-Rabi. The bundled input is synthetic.",
+    "outputs": "calibration.json with omega_rad_s_per_volt and rabi_at_100_hz; diagnostic PNG.",
+    "base": "synthetic-square.json"
+  },
+  {
+    "folder": "calibration/bb1",
+    "old": null,
+    "workflow": "calibrate-bb1",
+    "title": "BB1 envelope area calibration",
+    "inputs": "Complete raw RF BB1 capture; pulse.angle_deg; demodulation; optional manual window and pi_over_2_duration_s cross-check.",
+    "assumptions": "The full BB1 envelope has area 4*pi + target_angle. Include quiet baseline before/after. The bundled historical capture uses 90 degrees; this calibration input does not change the X(pi) optimization target.",
+    "outputs": "calibration.json with volts-to-Rabi conversion, baseline/window metadata and optional duration cross-check; diagnostic PNG.",
+    "base": "sample-bb1.json"
+  },
+  {
+    "folder": "analysis/nominal",
+    "old": null,
+    "workflow": "analyze",
+    "title": "Nominal robustness analysis",
+    "inputs": "input.kind=csv, scope or pulse; explicit target, scan.amplitude_errors (fractions), scan.detuning_hz (Hz). Measured input needs demodulation plus fixed volts-to-Rabi or explicit bb1_area scaling.",
+    "assumptions": "Compares errors to the measured zero-error propagator; center fidelity is one by definition, even for an incorrectly calibrated gate. The demo uses a generated BB1 X(pi); for measured data switch input and set the calibration artifact. Optional analysis.amplitude_path/phase_path compare one-column ideal traces after stretching them over the detected window.",
+    "outputs": "analysis.npz (controls and physical scan axes), analysis.json, heatmap.png; measured-input pulse diagnostics and optional overlays.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "analysis/best-axis",
+    "old": null,
+    "workflow": "analyze",
+    "title": "Best-Axis robustness analysis",
+    "inputs": "input.kind=csv, scope or pulse; explicit target, scan.amplitude_errors (fractions), scan.detuning_hz (Hz). Measured input needs demodulation plus fixed volts-to-Rabi or explicit bb1_area scaling.",
+    "assumptions": "Chooses one equatorial pi target from the nominal propagator, then fixes that target for the entire scan. Center fidelity need not be one. The demo uses a generated BB1 X(pi); for measured data switch input and set the calibration artifact. Optional analysis.amplitude_path/phase_path compare one-column ideal traces after stretching them over the detected window.",
+    "outputs": "analysis.npz (controls and physical scan axes), analysis.json, heatmap.png; measured-input pulse diagnostics and optional overlays.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "analysis/fixed-xpi",
+    "old": null,
+    "workflow": "analyze",
+    "title": "Fixed-Xpi robustness analysis",
+    "inputs": "input.kind=csv, scope or pulse; explicit target, scan.amplitude_errors (fractions), scan.detuning_hz (Hz). Measured input needs demodulation plus fixed volts-to-Rabi or explicit bb1_area scaling.",
+    "assumptions": "Compares all points to ideal X(pi). Absolute phase and amplitude calibration errors are included. The demo uses a generated BB1 X(pi); for measured data switch input and set the calibration artifact. Optional analysis.amplitude_path/phase_path compare one-column ideal traces after stretching them over the detected window.",
+    "outputs": "analysis.npz (controls and physical scan axes), analysis.json, heatmap.png; measured-input pulse diagnostics and optional overlays.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "pulses/waveforms",
+    "old": "waveform_example",
+    "workflow": "pulse",
+    "title": "Waveform generation",
+    "inputs": "Shared pulse duration, sample count, peak_rabi_hz, axis_phase_deg and kind; shape-specific parameters.",
+    "assumptions": "Supported kinds: square/constant, bb1, sine, triangle, linear, chirp, hs1, sahs1, wurst, wursttanh, csv. Rabi amplitudes are Hz and nonnegative.",
+    "outputs": "Canonical pulse.csv; amplitude_khz.csv, phase_deg.csv; metadata; calibrated TNMR percent/degree tables.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "pulses/chirp",
+    "old": "chirp_waveform_example",
+    "workflow": "pulse",
+    "title": "Linear frequency sweep",
+    "inputs": "pulse duration/samples/peak_rabi_hz; parameters.sweep_width_hz, center_hz and offset_hz.",
+    "assumptions": "TNMR PhMod phase is the negative integral of requested frequency minus the sequence offset; offset_hz must match the sequence.",
+    "outputs": "Canonical pulse and TNMR table files.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "pulses/serialization",
+    "old": "write_waveform_json_example",
+    "workflow": "pulse",
+    "title": "Waveform serialization",
+    "inputs": "The same pulse conditions as generation, or canonical pulse CSV with pulse.kind=csv, path, duration_s and samples.",
+    "assumptions": "Canonical pulse.csv stores midpoint times, Hz and radians. pulse.json describes the sampled export; it is not a Waveform.from_dict specification. Low-level Waveform.write_json/ from_dict preserve analytical shape serialization (see below).",
+    "outputs": "Pulse CSV, metadata JSON and command tables.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/inspect",
+    "old": "parse_sequence_to_json",
+    "workflow": "sequence",
+    "title": "TPS parsing and JSON round-trip",
+    "inputs": "sequence.input_path to TPS, or sequence.json_input=true and input_path to an exported JSON.",
+    "assumptions": "JSON intended for lossless round-trip must contain raw bytes. Matched TNT output requires the original TPS, not JSON.",
+    "outputs": "sequence.tps, sequence.json including raw bytes, sequence_summary.json and each table text.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/table-edit",
+    "old": "apply_waveform_to_sequence_example",
+    "workflow": "sequence",
+    "title": "Edit a table with a waveform",
+    "inputs": "An existing TPS and sequence.table_updates with table name, quantity and waveform or shared pulse overrides.",
+    "assumptions": "Target table must exist. Shared table edits require allow_shared=true; assignments address visible one-based TNMR events.",
+    "outputs": "Edited TPS, round-trip JSON, summary, table text.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/prune",
+    "old": "remove_unused_sequence_tables_example",
+    "workflow": "sequence",
+    "title": "Remove unused TPS tables offline",
+    "inputs": "TPS input and sequence.remove_unused=true.",
+    "assumptions": "Only table definitions with no parsed sequence references are removed. This edits an output copy and does not connect to TNMR.",
+    "outputs": "Cleaned TPS, JSON and remaining table texts.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/nvnmr",
+    "old": "nvnmr_template_parameter_table_waveform_editing",
+    "workflow": "sequence",
+    "title": "NVNMR parameter and table editing",
+    "inputs": "sequence.template=nvnmr; parameter_updates, table_updates and assignments.",
+    "assumptions": "Parameter and table names must already exist; use the summary or Python Sequence API to inspect names. Named templates provide matching TNT/TPS files.",
+    "outputs": "TPS, JSON, tables and a patched TNT copy.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/bb1",
+    "old": "apply_bb1_waveform_to_sequence_example",
+    "workflow": "sequence",
+    "title": "Bb1 sequence preparation",
+    "inputs": "Shared pulse conditions and the pulse_phmod matched template; optional sequence.parameter_updates.",
+    "assumptions": "Duration must exceed t_mod_offset. Positive/negative inversion tables use opposite sweep signs. Phase-only templates require a constant envelope and derive f1_amp from calibrated Rabi Hz. Amplitude-modulated templates convert physical Rabi Hz to calibrated percent and set f1_amp=100.",
+    "outputs": "Edited TPS, JSON, table text and matched TNT copy. No hardware connection.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/chirp",
+    "old": "apply_chirp_waveform_to_sequence_example",
+    "workflow": "sequence",
+    "title": "Chirp sequence preparation",
+    "inputs": "Shared pulse conditions and the pulse_phmod matched template; optional sequence.parameter_updates.",
+    "assumptions": "Duration must exceed t_mod_offset. Positive/negative inversion tables use opposite sweep signs. Phase-only templates require a constant envelope and derive f1_amp from calibrated Rabi Hz. Amplitude-modulated templates convert physical Rabi Hz to calibrated percent and set f1_amp=100.",
+    "outputs": "Edited TPS, JSON, table text and matched TNT copy. No hardware connection.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/inversion-chirp",
+    "old": "apply_chirp_waveform_to_nvnmr_sensing_sequence_example",
+    "workflow": "sequence",
+    "title": "Inversion-Chirp sequence preparation",
+    "inputs": "Shared pulse conditions and the inversion_phase template; optional sequence.parameter_updates.",
+    "assumptions": "Duration must exceed t_mod_offset. Positive/negative inversion tables use opposite sweep signs. Phase-only templates require a constant envelope and derive f1_amp from calibrated Rabi Hz. Amplitude-modulated templates convert physical Rabi Hz to calibrated percent and set f1_amp=100.",
+    "outputs": "TPS, JSON and table text; tnmr_update.json for explicit COM load/synchronize/save. The original TPS/TNT pair is not byte-matched.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/inversion-hs1",
+    "old": "apply_hs1_waveform_to_nvnmr_sensing_sequence_example",
+    "workflow": "sequence",
+    "title": "Inversion-Hs1 sequence preparation",
+    "inputs": "Shared pulse conditions and the inversion_ampm matched template; optional sequence.parameter_updates.",
+    "assumptions": "Duration must exceed t_mod_offset. Positive/negative inversion tables use opposite sweep signs. Phase-only templates require a constant envelope and derive f1_amp from calibrated Rabi Hz. Amplitude-modulated templates convert physical Rabi Hz to calibrated percent and set f1_amp=100.",
+    "outputs": "Edited TPS, JSON, table text and matched TNT copy. No hardware connection.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/inversion-wurst",
+    "old": "apply_wurst20_waveform_to_nvnmr_sensing_sequence_example",
+    "workflow": "sequence",
+    "title": "Inversion-Wurst sequence preparation",
+    "inputs": "Shared pulse conditions and the inversion_ampm matched template; optional sequence.parameter_updates.",
+    "assumptions": "Duration must exceed t_mod_offset. Positive/negative inversion tables use opposite sweep signs. Phase-only templates require a constant envelope and derive f1_amp from calibrated Rabi Hz. Amplitude-modulated templates convert physical Rabi Hz to calibrated percent and set f1_amp=100.",
+    "outputs": "Edited TPS, JSON, table text and matched TNT copy. No hardware connection.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "sequences/inversion-wursttanh",
+    "old": "apply_wursttanh_waveform_to_nvnmr_sensing_sequence_example",
+    "workflow": "sequence",
+    "title": "Inversion-Wursttanh sequence preparation",
+    "inputs": "Shared pulse conditions and the inversion_ampm matched template; optional sequence.parameter_updates.",
+    "assumptions": "Duration must exceed t_mod_offset. Positive/negative inversion tables use opposite sweep signs. Phase-only templates require a constant envelope and derive f1_amp from calibrated Rabi Hz. Amplitude-modulated templates convert physical Rabi Hz to calibrated percent and set f1_amp=100.",
+    "outputs": "Edited TPS, JSON, table text and matched TNT copy. No hardware connection.",
+    "base": "pulse.json"
+  },
+  {
+    "folder": "tnmr/inspect",
+    "old": "tnmrcontrol_basic_usage",
+    "workflow": "tnmr",
+    "title": "TNMR inspect",
+    "inputs": "tnmr.path to a working experiment; optional launch, parameters, tables, sequence_path and save_path.",
+    "assumptions": "Read-only inspection of the opened document. It still connects to TNMR and opens the configured experiment. Other supported actions are zg, go, stop, abort and reset; these operate the instrument.",
+    "outputs": "tnmr.json snapshot/action report and optional saved TNT.",
+    "base": "lab.example.json"
+  },
+  {
+    "folder": "tnmr/parameters",
+    "old": "tnmrcontrol_parameter_editing",
+    "workflow": "tnmr",
+    "title": "TNMR parameters",
+    "inputs": "tnmr.path to a working experiment; optional launch, parameters, tables, sequence_path and save_path.",
+    "assumptions": "Set parameters by TNMR dashboard names, not raw TPS parameter tokens. Changes stay in the open document unless save_path is supplied. Other supported actions are zg, go, stop, abort and reset; these operate the instrument.",
+    "outputs": "tnmr.json snapshot/action report and optional saved TNT.",
+    "base": "lab.example.json"
+  },
+  {
+    "folder": "tnmr/tables",
+    "old": "tnmrcontrol_sequence_tables",
+    "workflow": "tnmr",
+    "title": "TNMR tables",
+    "inputs": "tnmr.path to a working experiment; optional launch, parameters, tables, sequence_path and save_path.",
+    "assumptions": "Table names must match the open experiment. Supply numeric arrays or TNMR table text. sequence_path optionally loads a prepared TPS. Other supported actions are zg, go, stop, abort and reset; these operate the instrument.",
+    "outputs": "tnmr.json snapshot/action report and optional saved TNT.",
+    "base": "lab.example.json"
+  },
+  {
+    "folder": "tnmr/clear-tables",
+    "old": "tnmrcontrol_clean_sequence_tables",
+    "workflow": "tnmr",
+    "title": "TNMR clear-tables",
+    "inputs": "tnmr.path to a working experiment; optional launch, parameters, tables, sequence_path and save_path.",
+    "assumptions": "Clear only explicitly listed tables unused by the currently exported sequence. Used tables are rejected. A separate save_path is mandatory. COM cannot delete table definitions, so contents become zero. Other supported actions are zg, go, stop, abort and reset; these operate the instrument.",
+    "outputs": "tnmr.json snapshot/action report and optional saved TNT.",
+    "base": "lab.example.json"
+  },
+  {
+    "folder": "optimization/offline",
+    "old": null,
+    "workflow": "optimize-offline",
+    "title": "Simulated X(pi) optimization",
+    "inputs": "Shared pulse, calibration.rabi_at_100_hz, physical scan axes, optimization coefficients/update count/Adam steps; optional simulation gain and phase ripple.",
+    "assumptions": "Target is fixed X(pi). BB1 or any supported pulse/CSV can seed the same cubic-spline optimizer. The simulation uses a simplified response and an identity response Jacobian; it does not establish hardware performance.",
+    "outputs": "Best pulse exports, history.json, final coefficient checkpoint.npz and result.json.",
+    "base": "offline-demo.json"
+  },
+  {
+    "folder": "optimization/phase-reference",
+    "old": null,
+    "workflow": "phase-reference",
+    "title": "Phase-Reference X(pi) workflow",
+    "inputs": "Shared pulse/calibration/scan settings, TNMR working file and two table names, scope window, demodulation, phase_reference_captures >= 2.",
+    "assumptions": "A complete BB1 5*pi reference must fit within duration and amplitude limit. Only X(pi) is supported. The TNMR sequence must play the selected tables with exactly the configured duration and sample count; this workflow does not rebuild its timing. Verify the working sequence and trigger setup first. Phase referencing uses repeated BB1 captures, and live optimization then uses the requested seed. Failed runs attempt original-table restoration and stop; successful runs leave the best measured candidate loaded.",
+    "outputs": "Reference diagnostics and captures; live mode also produces history, checkpoints and measured heatmaps.",
+    "base": "lab.example.json"
+  },
+  {
+    "folder": "optimization/live",
+    "old": null,
+    "workflow": "optimize-live",
+    "title": "Live X(pi) workflow",
+    "inputs": "Shared pulse/calibration/scan settings, TNMR working file and two table names, scope window, demodulation, phase_reference_captures >= 2.",
+    "assumptions": "A complete BB1 5*pi reference must fit within duration and amplitude limit. Only X(pi) is supported. The TNMR sequence must play the selected tables with exactly the configured duration and sample count; this workflow does not rebuild its timing. Verify the working sequence and trigger setup first. Phase referencing uses repeated BB1 captures, and live optimization then uses the requested seed. Failed runs attempt original-table restoration and stop; successful runs leave the best measured candidate loaded.",
+    "outputs": "Reference diagnostics and captures; live mode also produces history, checkpoints and measured heatmaps.",
+    "base": "lab.example.json"
+  }
+]

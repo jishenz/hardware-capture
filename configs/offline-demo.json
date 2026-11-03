@@ -1,0 +1,24 @@
+{
+  "extends": "pulse.json",
+  "pulse": {
+    "samples": 160
+  },
+  "optimization": {
+    "coefficients": 40,
+    "updates": 3,
+    "amplitude_learning_rate": 0.01,
+    "phase_learning_rate": 0.02,
+    "amplitude_step": 0.01,
+    "phase_step_rad": 0.04
+  },
+  "simulation": {
+    "amplitude_scale": 0.82,
+    "phase_ripple_rad": 0.14
+  },
+  "scan": {
+    "amplitude_count": 7,
+    "detuning_count": 7,
+    "detuning_min_hz": -31250,
+    "detuning_max_hz": 31250
+  }
+}

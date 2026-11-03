@@ -1,0 +1,29 @@
+{
+  "pulse": {
+    "kind": "bb1",
+    "duration_s": 6e-05,
+    "samples": 600,
+    "angle_deg": 180,
+    "axis_phase_deg": 0,
+    "max_rabi_hz": 125000
+  },
+  "calibration": {
+    "rabi_at_100_hz": 125000
+  },
+  "output": {
+    "directory": "../outputs",
+    "show_plots": false
+  },
+  "scan": {
+    "amplitude_min": -0.5,
+    "amplitude_max": 0.5,
+    "amplitude_count": 21,
+    "detuning_min_hz": -62500,
+    "detuning_max_hz": 62500,
+    "detuning_count": 21
+  },
+  "analysis": {
+    "target": "fixed_xpi",
+    "steps": 600
+  }
+}

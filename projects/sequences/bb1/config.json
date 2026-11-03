@@ -1,0 +1,9 @@
+{
+  "extends": "../../../configs/pulse.json",
+  "pulse": {
+    "kind": "bb1"
+  },
+  "sequence": {
+    "template": "pulse_phmod"
+  }
+}

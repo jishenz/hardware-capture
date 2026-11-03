@@ -1,0 +1,24 @@
+{
+  "extends": "pulse.json",
+  "input": {
+    "kind": "csv",
+    "path": "../hardware_capture/resources/captures/pulse1_008.csv"
+  },
+  "pulse": {
+    "angle_deg": 90
+  },
+  "demodulation": {
+    "frequency_hz": 601010011.3,
+    "cutoff_hz": 25000000,
+    "filter_order": 4,
+    "q_sign": 1
+  },
+  "analysis": {
+    "target": "nominal",
+    "scaling": "bb1_area"
+  },
+  "window": {
+    "threshold_fraction": 0.1,
+    "padding_s": 2.5e-07
+  }
+}

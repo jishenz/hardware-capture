@@ -1,0 +1,19 @@
+{
+  "oscilloscope/rigol_dho.py": "devices/rigol.py",
+  "oscilloscope/rf_demodulation.py": "signal/demodulation.py",
+  "oscilloscope/pulse_robustness.py": "analysis/robustness.py",
+  "oscilloscope/plotting.py": "analysis/plotting.py",
+  "oscilloscope/examples/calibrate_rf_from_bb1.py": "calibration/bb1.py",
+  "oscilloscope/examples/calibrate_rf_from_square.py": "calibration/square.py",
+  "oscilloscope/examples/scope_rf_robustness_heatmap.py": "analysis/overlays.py",
+  "oscilloscope/examples/scope_rf_best_axis_xpi_heatmap.py": "analysis/best_axis.py",
+  "rf/redstone/waveform.py": "pulses/waveforms.py",
+  "rf/redstone/sequence.py": "sequences/tps.py",
+  "rf/redstone/tnmrcontrol.py": "devices/tnmr.py",
+  "rf/redstone/closed_loop_optimizer/core.py": "optimization/core.py",
+  "rf/redstone/closed_loop_optimizer/pipeline.py": "optimization/pipeline.py",
+  "rf/redstone/closed_loop_optimizer/demo_stage2_offline.py": "workflows/optimize.py (offline)",
+  "oscilloscope/examples/capture_time_window.py": "workflows/common.py (capture)",
+  "rf/redstone/closed_loop_optimizer/run_stage1_calibration.py": "api.py (phase-reference)",
+  "rf/redstone/closed_loop_optimizer/run_two_stage_optimizer.py": "api.py (optimize-live)"
+}

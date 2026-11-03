@@ -1,0 +1,7 @@
+{
+  "extends": "../../../configs/pulse.json",
+  "pulse": {
+    "kind": "sine",
+    "peak_rabi_hz": 50000
+  }
+}

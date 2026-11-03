@@ -1,0 +1,13 @@
+{
+  "extends": "../../../configs/pulse.json",
+  "sequence": {
+    "input_path": "../../../hardware_capture/resources/tnmr/20260630_pulse_phmod_template.tps",
+    "table_updates": [
+      {
+        "name": "phmod_pulse",
+        "quantity": "phase",
+        "allow_shared": true
+      }
+    ]
+  }
+}

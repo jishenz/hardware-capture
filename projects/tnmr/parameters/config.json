@@ -1,0 +1,6 @@
+{
+  "extends": "../../../configs/lab.example.json",
+  "tnmr": {
+    "action": "update"
+  }
+}

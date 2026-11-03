@@ -1,0 +1,6 @@
+{
+  "extends": "../../../configs/pulse.json",
+  "sequence": {
+    "template": "nvnmr"
+  }
+}

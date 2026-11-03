@@ -1,0 +1,7 @@
+{
+  "extends": "../../../configs/pulse.json",
+  "sequence": {
+    "input_path": "../../../hardware_capture/resources/tnmr/20260620_NVNMR_template.tps",
+    "remove_unused": true
+  }
+}

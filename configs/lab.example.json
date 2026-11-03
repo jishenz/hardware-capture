@@ -1,0 +1,35 @@
+{
+  "extends": "pulse.json",
+  "scope": {
+    "resource": "SET_SCOPE_VISA_RESOURCE",
+    "channel": "CHAN1",
+    "window_start_s": -1e-05,
+    "window_end_s": 0.0001,
+    "timeout_ms": 30000,
+    "trigger_timeout_s": 30,
+    "armed_timeout_s": 2,
+    "poll_s": 0.05,
+    "allow_clamp": false,
+    "rearm": false
+  },
+  "demodulation": {
+    "frequency_hz": 601010011.3,
+    "cutoff_hz": 25000000,
+    "filter_order": 4,
+    "q_sign": -1
+  },
+  "calibration": {
+    "omega_rad_s_per_volt": 1776212.654495664
+  },
+  "tnmr": {
+    "path": "../hardware_capture/resources/tnmr/20260704_NVNMR_AdiabaticInversionTrain_AMPM.tnt",
+    "amplitude_table": "ampmod_p180",
+    "phase_table": "phmod_p180",
+    "launch": false
+  },
+  "optimization": {
+    "coefficients": 150,
+    "updates": 10,
+    "phase_reference_captures": 5
+  }
+}

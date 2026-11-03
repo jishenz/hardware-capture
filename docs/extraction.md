@@ -1,5 +1,9 @@
 # Extraction notes
 
+## Historical extraction snapshot
+
+This document records the initial extraction before the functional refactor. Paths and adaptation details below describe that snapshot, not the current layout. See [current project catalog](project-catalog.md) and [module map](refactor-module-map.json). The manifest preserves original source hashes and historical extraction destinations.
+
 ## Source and scope
 
 Extracted on November 3, 2026 from `C:\Users\jd200\diamondgui` at source HEAD `7e23a6f3c4ea1f1662c9d95a98b6ec3c8a23ede4`.
@@ -37,7 +41,7 @@ The oscillator capture and RF control code retain their separate source provenan
 
 The omitted notebooks remain available in the source repository. Their functionality belongs to experiment orchestration and would require a separate extraction of `measurement/tnmr_file.py` and its contracts/data.
 
-The [machine-readable manifest](extraction-manifest.json) records the currently retained source paths and their original SHA-256, source Git status, and selected exclusions. Removed source paths are recorded as exclusions. Checksums refer to the files before import/path adaptation. Generated caches and capture outputs are excluded without itemizing every file.
+The [machine-readable manifest](extraction-manifest.json) records the source paths retained at the extraction snapshot and their original SHA-256, source Git status, and selected exclusions. Removed source paths are recorded as exclusions. Checksums refer to the files before import/path adaptation. Generated caches and capture outputs are excluded without itemizing every file.
 
 ## Independence
 

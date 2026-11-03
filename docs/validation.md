@@ -1,33 +1,38 @@
-# Extraction validation
+# Refactor validation
 
-Validated on November 3, 2026, on Windows with an independent Python 3.12 environment.
+Validated November 3, 2026 on Windows/Python 3.12. Validation reached **unit tests, fake-device integration, offline workflows, installed-package checks and live previews**. No physical instrument was connected or run.
 
-## Results
+## Evidence
 
 | Check | Result |
-| --- | --- |
-| `uv sync --extra scope --extra tnmr` | Passed after subsystem removal; lockfile refreshed and removed subsystem dependencies uninstalled |
-| `uv run --no-sync pytest -q --tb=short` | **119 passed** after subsystem removal |
-| Stage 2 synthetic optimizer demo | PASS; objective loss decreased from 0.663474 to 0.430251 |
-| Stage 1 and full optimizer default entry points | Both completed in dry-run mode; no instrument commands sent |
-| All five scope CLI `--help` entry points | Passed from outside the repository |
-| Original isolated package import check | Passed from outside the repository at extraction; surviving core modules also covered by the current test run |
-| Python source and 18 remaining notebook code-cell syntax checks | Passed after subsystem removal |
-| Notebook outputs | Cleared; execution counts reset and portable Python kernel metadata selected |
-| Initial wheel build | Passed at extraction; obsolete build/wheel artifacts removed with the retired subsystem |
-| Source repository verification | All 65 currently retained source file hashes and original source Git status unchanged |
-| Removal audit | No retired subsystem directory or active code/dependency/documentation links remain; historical exclusion records retained |
+|---|---|
+| `uv run --no-sync pytest -q --tb=short` | **163 passed**, about 30 seconds |
+| `uv sync --extra scope --extra tnmr` | Passed; installed CLI entry point |
+| `uv run --no-sync hc list` | All 10 public workflows listed |
+| All 26 project configs | Plan validation passed without devices |
+| Python and notebook syntax | All source modules and 26 thin notebooks passed; saved notebook outputs empty |
+| Documentation links | Local Markdown links resolve |
+| Offline square/BB1 calibration | Passed using synthetic square and retained BB1 capture |
+| Measured and ideal pulse analysis | Passed; produced data, JSON and plots |
+| Offline optimization demo | Best loss 0.429710, down from initial 0.672945 with the configured gain/ripple model |
+| Template preparation | All seven named-template presets exported/round-tripped, source bytes unchanged; inversion-phase uses explicit COM export config |
+| Wheel build and isolated import | Passed outside checkout; all four TPS/TNT pairs included; no retired module paths in wheel |
+| Original DiamondGUI files | All 65 manifest source hashes unchanged |
 
-The initial extraction test run had 118 passes and eight setup errors because Windows denied access to the existing system `pytest-of-jd200` directory. The project now uses `.pytest_cache/tmp` as its disposable pytest temporary directory. The original selected suite then passed all 126 tests. After the requested removal, the remaining suite passes all 119 tests. Parallel pytest invocations should use distinct `--basetemp` paths.
+The original retained suite had 119 tests. Thirteen assertions tied to retired script parsers/globals were replaced by shared workflow contracts. The new suite includes the retained numerical/fake-device tests plus configuration inheritance and file-relative paths, target semantics, physical detuning equivalence, all waveform-family CSV round-trips, calibration artifact reuse, raw CSV versus fake-scope equality, amplitude ceilings, custom optimizer seeds, failure restoration, template round-trips, TNMR update/clear guards and every project preset.
 
-## Hardware behavior review
+A Windows Tk backend issue appeared during file-only figure rendering. File-only plots now construct matplotlib Figure objects without initializing Tk; interactive plotting remains an explicit option. The final suite passed after that fix.
 
-The extraction changes imports, paths, packaging, notebook setup, and local configuration. Instrument commands, timing, voltage limits, calibration defaults, and cleanup logic are inherited unchanged.
+## Hardware lifecycle review
 
-| Component | Default / activation | Retained cleanup or protection |
-| --- | --- | --- |
-| Closed-loop TNMR + RIGOL entry points | Dry run by default; live mode requires the existing confirmation string | Pipeline table readback, best measured candidate restoration, and error recovery paths retained |
-| RIGOL scope | Connect/acquire only through explicit calls | Existing trigger synchronization, timeout, and resource cleanup behavior retained |
-| TNMR COM wrapper | Explicit connection; fake COM used in tests | Single owner-thread dispatch and close behavior retained |
+| Surface | Entry / normal behavior | Failure behavior |
+|---|---|---|
+| Scope acquisition | Explicit live run; open, arm/read, close owned VISA session | Close owned session in finally, including failed open/read |
+| TNMR workflow | Explicit live run; connect/open configured document and perform selected action | Close owned COM adapter in finally; an already-applied edit is not a transaction rollback |
+| Live optimization | Explicit live run; verify table readback, reference phase, capture each candidate; leave best measured tables loaded | Attempt original-table restoration and TNMR stop; close owned connections |
+| Offline sequence editing | Output copies only; strict matched payload check for binary TNT patching | Reject mismatched pair; inversion-phase emits a separate live export config |
+| Offline API / previews | No device constructors called by plans; no hardware output files on preview | Configuration errors before dispatch where inputs are inspectable offline |
 
-No migration-specific hardware behavior regression was identified by these checks. Validation reached **unit tests, fake-backed logic, isolated imports, and dry-run entry points**. No physical instrument connection or acquisition was performed. Live notebooks and hardware diagnostics were not executed. Lab calibration values and native driver/COM/VISA behavior still require verification on the instrument computer.
+Timing, trigger polarity, scope sampling, RF attenuator/duty-cycle settings, physical calibration, native VISA/COM behavior and real amplifier response still require validation on the instrument setup. The live optimizer does not rewrite a TNMR sequence's timing, enforce a laboratory-wide duty cycle, or verify a hardware transfer function. The identity-response approximation is retained and documented. Checkpoints can be inspected; automatic resume is not provided.
+
+Historical extraction evidence is recorded in Git history and the extraction manifest. Old module paths are intentionally removed after migration; current callers use the functional package layout.

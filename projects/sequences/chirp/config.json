@@ -1,0 +1,15 @@
+{
+  "extends": "../../../configs/pulse.json",
+  "pulse": {
+    "kind": "chirp",
+    "peak_rabi_hz": 50000,
+    "parameters": {
+      "sweep_width_hz": 200000,
+      "center_hz": 0,
+      "offset_hz": 0
+    }
+  },
+  "sequence": {
+    "template": "pulse_phmod"
+  }
+}

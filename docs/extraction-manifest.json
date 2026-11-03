@@ -1,0 +1,1792 @@
+{
+  "source_repository": "C:\\Users\\jd200\\diamondgui",
+  "source_commit": "7e23a6f3c4ea1f1662c9d95a98b6ec3c8a23ede4",
+  "date": "2026-11-03",
+  "source_status": [
+    " M hardware/oscilloscope/tests/test_rf_analysis.py",
+    "?? .pytest-tmp-square-explain-20260731/",
+    "?? hardware/oscilloscope/tests/test_scope_rf_best_axis_xpi_heatmap.py",
+    "?? hardware/oscilloscope/tests/test_square_rf_calibration.py"
+  ],
+  "included": [
+    {
+      "source": "hardware/oscilloscope/__init__.py",
+      "destination": "hardware_capture/oscilloscope/__init__.py",
+      "source_sha256": "ebe912227ede8cd33c51e674fb00384d00a99f6e697d0521565013627d6f3bc9"
+    },
+    {
+      "source": "hardware/oscilloscope/examples/calibrate_rf_from_bb1.py",
+      "destination": "hardware_capture/oscilloscope/examples/calibrate_rf_from_bb1.py",
+      "source_sha256": "3f52df3c7caccd28e1f177f16d017dbcc49af495d7cd79537462ebdd0e006bf2"
+    },
+    {
+      "source": "hardware/oscilloscope/examples/calibrate_rf_from_square.py",
+      "destination": "hardware_capture/oscilloscope/examples/calibrate_rf_from_square.py",
+      "source_sha256": "55f1c89000a1d94166369fbb56d4370648f5989235c4c7bdca6e7beb0c733b66"
+    },
+    {
+      "source": "hardware/oscilloscope/examples/capture_time_window.py",
+      "destination": "hardware_capture/oscilloscope/examples/capture_time_window.py",
+      "source_sha256": "0d810a84f95d2f41e0914054ddb5e2e57586b858f803a6c2218e8cb6c8ce1cd2"
+    },
+    {
+      "source": "hardware/oscilloscope/examples/oscilloscope_connection_pipeline.ipynb",
+      "destination": "hardware_capture/oscilloscope/examples/oscilloscope_connection_pipeline.ipynb",
+      "source_sha256": "0b3e40b29c8e512b8cc86ebb88035dca1ddacc79f8c45945eb666c14b0183ec9"
+    },
+    {
+      "source": "hardware/oscilloscope/examples/scope_rf_best_axis_xpi_heatmap.py",
+      "destination": "hardware_capture/oscilloscope/examples/scope_rf_best_axis_xpi_heatmap.py",
+      "source_sha256": "6a4f1f09d2cf0a86ba1cccd2b9a2fd45033f06624b0807843b6dd92f5829a61e"
+    },
+    {
+      "source": "hardware/oscilloscope/examples/scope_rf_robustness_heatmap.py",
+      "destination": "hardware_capture/oscilloscope/examples/scope_rf_robustness_heatmap.py",
+      "source_sha256": "f269223bc2ed36d54b71ec055449ecdf43c2933fa431677ca493649ebf73ed13"
+    },
+    {
+      "source": "hardware/oscilloscope/plotting.py",
+      "destination": "hardware_capture/oscilloscope/plotting.py",
+      "source_sha256": "2d70e9e6b33ba792aceb7d7581e26959e61d162f48b4391fbf46fcb5264bb95c"
+    },
+    {
+      "source": "hardware/oscilloscope/pulse_robustness.py",
+      "destination": "hardware_capture/oscilloscope/pulse_robustness.py",
+      "source_sha256": "2249820aaeba0e56e31634f5bc555bf830e9544d41e8a0c5072860e8523cf423"
+    },
+    {
+      "source": "hardware/oscilloscope/rf_demodulation.py",
+      "destination": "hardware_capture/oscilloscope/rf_demodulation.py",
+      "source_sha256": "0439ad56a259029973c297da065b9e5c363166a300c812957ae9e8d103916649"
+    },
+    {
+      "source": "hardware/oscilloscope/rigol_dho.py",
+      "destination": "hardware_capture/oscilloscope/rigol_dho.py",
+      "source_sha256": "89f4145695b58be70b3202cd7f1955da249dac131dc45683fc9b6338e8b29992"
+    },
+    {
+      "source": "hardware/oscilloscope/tests/__init__.py",
+      "destination": "hardware_capture/oscilloscope/tests/__init__.py",
+      "source_sha256": "fe1c0e0dafca4c022186873047e9d061b302f3915b928e79ee2117f005490769"
+    },
+    {
+      "source": "hardware/oscilloscope/tests/pulse1_008.csv",
+      "destination": "hardware_capture/oscilloscope/tests/pulse1_008.csv",
+      "source_sha256": "56726f77a0e7d9e3a6f4748046b2864c94fb3366c791262231f99c7c3bce76f8"
+    },
+    {
+      "source": "hardware/oscilloscope/tests/test_bb1_rf_calibration.py",
+      "destination": "hardware_capture/oscilloscope/tests/test_bb1_rf_calibration.py",
+      "source_sha256": "82a36de9e8c6b5ce27c9054b15908062989726bc6c163a12c521fba390cd39e7"
+    },
+    {
+      "source": "hardware/oscilloscope/tests/test_rf_analysis.py",
+      "destination": "hardware_capture/oscilloscope/tests/test_rf_analysis.py",
+      "source_sha256": "f608c40ff7093ef9a375dc7c505cb4e2e6fdffdbbb656fc6f682fe61f403a7d6"
+    },
+    {
+      "source": "hardware/oscilloscope/tests/test_rigol_dho.py",
+      "destination": "hardware_capture/oscilloscope/tests/test_rigol_dho.py",
+      "source_sha256": "32f3641058f1263799c75f8987c7a29f5f44aa7912dd840dc24871ad2c71f73d"
+    },
+    {
+      "source": "hardware/oscilloscope/tests/test_scope_rf_best_axis_xpi_heatmap.py",
+      "destination": "hardware_capture/oscilloscope/tests/test_scope_rf_best_axis_xpi_heatmap.py",
+      "source_sha256": "3381b534bfdf16748790c31098a8131e3fa282575ff22bc054a5ffce465c4460"
+    },
+    {
+      "source": "hardware/oscilloscope/tests/test_square_rf_calibration.py",
+      "destination": "hardware_capture/oscilloscope/tests/test_square_rf_calibration.py",
+      "source_sha256": "be162e4a12fbf55f854b13de8d403761cb3b1416ab95d2be21a54e1c919c3bd4"
+    },
+    {
+      "source": "hardware/rf/redstone/20260620_NVNMR_template.tnt",
+      "destination": "hardware_capture/rf/redstone/20260620_NVNMR_template.tnt",
+      "source_sha256": "4f14b35e81328fa9a620e11f4b194e99e86c65ea9ad9fae3edcf51497071f11e"
+    },
+    {
+      "source": "hardware/rf/redstone/20260620_NVNMR_template.tps",
+      "destination": "hardware_capture/rf/redstone/20260620_NVNMR_template.tps",
+      "source_sha256": "528c75e882bdeed15bd45c90e31531fc62afdd2acda2797604a16675a22e9247"
+    },
+    {
+      "source": "hardware/rf/redstone/20260630_NVNMR_AdiabaticInversionTrain.tnt",
+      "destination": "hardware_capture/rf/redstone/20260630_NVNMR_AdiabaticInversionTrain.tnt",
+      "source_sha256": "ace87ecf8c351e472595d1ce173de5e4e19ea6e24748ba9137bd8b95322354b9"
+    },
+    {
+      "source": "hardware/rf/redstone/20260630_NVNMR_AdiabaticInversionTrain.tps",
+      "destination": "hardware_capture/rf/redstone/20260630_NVNMR_AdiabaticInversionTrain.tps",
+      "source_sha256": "8e456d696c8e36c7a87cab456af9cd6f7a240d9d826002f5b8ec91ac5e814225"
+    },
+    {
+      "source": "hardware/rf/redstone/20260630_pulse_phmod_template.tnt",
+      "destination": "hardware_capture/rf/redstone/20260630_pulse_phmod_template.tnt",
+      "source_sha256": "95403e45fff524c155f1ff2e81681560d9fbae5fa80349e99ac85918b3c1d0b5"
+    },
+    {
+      "source": "hardware/rf/redstone/20260630_pulse_phmod_template.tps",
+      "destination": "hardware_capture/rf/redstone/20260630_pulse_phmod_template.tps",
+      "source_sha256": "0891af484e40be7bdb879c41f983359676be6a3f781f7a20d28a8e5a9b784e9c"
+    },
+    {
+      "source": "hardware/rf/redstone/20260704_NVNMR_AdiabaticInversionTrain_AMPM.tnt",
+      "destination": "hardware_capture/rf/redstone/20260704_NVNMR_AdiabaticInversionTrain_AMPM.tnt",
+      "source_sha256": "3755ac1637c4ebb0cfcf2a7c908a8d9a25ae3c0e01f024618d5e56619aaa925b"
+    },
+    {
+      "source": "hardware/rf/redstone/20260704_NVNMR_AdiabaticInversionTrain_AMPM.tps",
+      "destination": "hardware_capture/rf/redstone/20260704_NVNMR_AdiabaticInversionTrain_AMPM.tps",
+      "source_sha256": "dc108bf71eec831a98152f7cb2cfa5e2aad5e5a08f6b2115712c75f0304b3a7c"
+    },
+    {
+      "source": "hardware/rf/redstone/__init__.py",
+      "destination": "hardware_capture/rf/redstone/__init__.py",
+      "source_sha256": "5f8ddfea21bad7d0801800ab4b03219430042b8c0f73171124051d22ae833738"
+    },
+    {
+      "source": "hardware/rf/redstone/closed_loop_optimizer/__init__.py",
+      "destination": "hardware_capture/rf/redstone/closed_loop_optimizer/__init__.py",
+      "source_sha256": "4eb3ba1e9dff9c8381f5ddb7745b34e44f2fa84685279e764c02a20024eca7ed"
+    },
+    {
+      "source": "hardware/rf/redstone/closed_loop_optimizer/core.py",
+      "destination": "hardware_capture/rf/redstone/closed_loop_optimizer/core.py",
+      "source_sha256": "2391b6b26252c1ddc1e4fb2b8d3164322f73fb36a49491f597cf9715807f684b"
+    },
+    {
+      "source": "hardware/rf/redstone/closed_loop_optimizer/demo_stage2_offline.py",
+      "destination": "hardware_capture/rf/redstone/closed_loop_optimizer/demo_stage2_offline.py",
+      "source_sha256": "15404791b5474de12025286f582069943fbc9f22f47bbd5732f5f08471035cf4"
+    },
+    {
+      "source": "hardware/rf/redstone/closed_loop_optimizer/pipeline.py",
+      "destination": "hardware_capture/rf/redstone/closed_loop_optimizer/pipeline.py",
+      "source_sha256": "d0961ab52b3704f1c72af217020110d5719b5eabe7575176e8670793e8c04f94"
+    },
+    {
+      "source": "hardware/rf/redstone/closed_loop_optimizer/README.md",
+      "destination": "hardware_capture/rf/redstone/closed_loop_optimizer/README.md",
+      "source_sha256": "238c7352c4fd9df5282679eed719b0bc345332438b5757fa3dcaf5b368fdcc05"
+    },
+    {
+      "source": "hardware/rf/redstone/closed_loop_optimizer/run_stage1_calibration.py",
+      "destination": "hardware_capture/rf/redstone/closed_loop_optimizer/run_stage1_calibration.py",
+      "source_sha256": "127a024f43c6bb6ee2545744d9b5fa2ba5df451b0ee47e5959a1a9c7c11a29f3"
+    },
+    {
+      "source": "hardware/rf/redstone/closed_loop_optimizer/run_two_stage_optimizer.py",
+      "destination": "hardware_capture/rf/redstone/closed_loop_optimizer/run_two_stage_optimizer.py",
+      "source_sha256": "3720048a0f69c3271cbca48f76e4103a40c3882c4ac696a6400254314d73c373"
+    },
+    {
+      "source": "hardware/rf/redstone/closed_loop_optimizer/tests/test_core.py",
+      "destination": "hardware_capture/rf/redstone/closed_loop_optimizer/tests/test_core.py",
+      "source_sha256": "a230cc40af1ec1619bafda20a09230ab0cb4b0c430e2b70e5cbe6551b0a6379d"
+    },
+    {
+      "source": "hardware/rf/redstone/closed_loop_optimizer/tests/test_pipeline.py",
+      "destination": "hardware_capture/rf/redstone/closed_loop_optimizer/tests/test_pipeline.py",
+      "source_sha256": "7979ac5a2aa676ee1e5fc4931eeefe199887184e8df30fba701f230366f01e3a"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/apply_bb1_waveform_to_sequence_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/apply_bb1_waveform_to_sequence_example.ipynb",
+      "source_sha256": "a13ef67914023cadd0ce9af57f1815765b6f81e00849cce8e54b09631dafa10a"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/apply_chirp_waveform_to_nvnmr_sensing_sequence_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/apply_chirp_waveform_to_nvnmr_sensing_sequence_example.ipynb",
+      "source_sha256": "8db262f37aae4931d260b2a1003e6bd6a22f958c2b6b7783d1da5adf43e1b7e9"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/apply_chirp_waveform_to_sequence_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/apply_chirp_waveform_to_sequence_example.ipynb",
+      "source_sha256": "1ed1eaef7eca02b9619b185c2fa786db19e79b3c9c970eb509c49fd7195176d3"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/apply_hs1_waveform_to_nvnmr_sensing_sequence_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/apply_hs1_waveform_to_nvnmr_sensing_sequence_example.ipynb",
+      "source_sha256": "a5a2352deae835e0ddaff68811fa4e8a039546413ea7cb9020fe81b27e3ed781"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/apply_waveform_to_sequence_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/apply_waveform_to_sequence_example.ipynb",
+      "source_sha256": "a62a1172a2e2fed223c55a0eb344131d9c6043701b2315e05488c25eaa9b61eb"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/apply_wurst20_waveform_to_nvnmr_sensing_sequence_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/apply_wurst20_waveform_to_nvnmr_sensing_sequence_example.ipynb",
+      "source_sha256": "e147bba416717be39d426ae2c82a9de08e0dfe4e9d7e17d7b21461c9e8839fec"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/apply_wursttanh_waveform_to_nvnmr_sensing_sequence_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/apply_wursttanh_waveform_to_nvnmr_sensing_sequence_example.ipynb",
+      "source_sha256": "d891a3ef266f8d7bada47ee537cb1d8d3044daf534955339b84d7be91f9e774b"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/chirp_waveform_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/chirp_waveform_example.ipynb",
+      "source_sha256": "a006ce20681c99485ac604a48da94bbb6fba04aaddb0bd77635c9e284a778243"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/nvnmr_template_parameter_table_waveform_editing.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/nvnmr_template_parameter_table_waveform_editing.ipynb",
+      "source_sha256": "3649e6aa92e86b5670d07ea5eb5300801e6b56e01fa5a21716b7c065523257c6"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/parse_sequence_to_json.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/parse_sequence_to_json.ipynb",
+      "source_sha256": "80973dcef20c272e7f931899317204bc3dc2e75ea09d3b52d0315affd421cd4c"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/remove_unused_sequence_tables_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/remove_unused_sequence_tables_example.ipynb",
+      "source_sha256": "d5d7fc950e83f5e2806d2ac3704bd1184620b8ab269cc7902bbfbe2e660cb69a"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/tnmrcontrol_basic_usage.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/tnmrcontrol_basic_usage.ipynb",
+      "source_sha256": "bf321d10dd47cf54999dc6cc02d6ae6d29e9b7473eb716282bcd499ab047a319"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/tnmrcontrol_clean_sequence_tables.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/tnmrcontrol_clean_sequence_tables.ipynb",
+      "source_sha256": "f53b99e18cf8f3fc88f8b3a38744201be532688e3d0b5ba609cf76e056b1bddd"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/tnmrcontrol_parameter_editing.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/tnmrcontrol_parameter_editing.ipynb",
+      "source_sha256": "cb84fff2c8a6f1766fe8f73b417608c6aac53120b81e5823f728cfcf95679973"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/tnmrcontrol_sequence_tables.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/tnmrcontrol_sequence_tables.ipynb",
+      "source_sha256": "f603d6a03ddbb185621a866c69de9f899d7dbb0fa54235e8a4783d06dbbafaf3"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/waveform_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/waveform_example.ipynb",
+      "source_sha256": "db5f09c48bf4a9cb3ffefd832459055ab62a1f308e43f2d78c749c31edd4287c"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/write_waveform_json_example.ipynb",
+      "destination": "hardware_capture/rf/redstone/examples/write_waveform_json_example.ipynb",
+      "source_sha256": "eab4fe2459eec9d3d61f94444a614779237e40ba85fa01b764e568d71c492e55"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/1pulse - f1.tps",
+      "destination": "hardware_capture/rf/redstone/references/examples/tnmr-sequences/common/1pulse - f1.tps",
+      "source_sha256": "8d824148e4d1cf153891b49d34a448ef981c0e05715f7f9e6edde85416c960d3"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/A1 - TNMR File Format.doc",
+      "destination": "hardware_capture/rf/redstone/references/manuals/tecmag/A1 - TNMR File Format.doc",
+      "source_sha256": "5c736ab3fb36aefdafd2f4ebb69864038cf3d7998b9832ad308e24dc144baafd"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/Errata.pdf",
+      "destination": "hardware_capture/rf/redstone/references/manuals/tecmag/Errata.pdf",
+      "source_sha256": "4c8046085590c4bc812e7879801b7a8d0de9032d3e67396f08209596da426003"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/Hardware Reference.pdf",
+      "destination": "hardware_capture/rf/redstone/references/manuals/tecmag/Hardware Reference.pdf",
+      "source_sha256": "170fd8c278558e5fdecc173a6acdef4a0773132bcc371dc71d823092e363a1a7"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/SystemSpecificInfo.pdf",
+      "destination": "hardware_capture/rf/redstone/references/manuals/tecmag/SystemSpecificInfo.pdf",
+      "source_sha256": "1d407142c414e16b98b1a8630c35b41966e99fde9dcb98903acac5f2a910baf7"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/TNMR Reference Guide.pdf",
+      "destination": "hardware_capture/rf/redstone/references/manuals/tecmag/TNMR Reference Guide.pdf",
+      "source_sha256": "0aa48dc91949351ff4e219702455490d9af4c2e3379ab829ec2b64fa13733aad"
+    },
+    {
+      "source": "hardware/rf/redstone/sequence.py",
+      "destination": "hardware_capture/rf/redstone/sequence.py",
+      "source_sha256": "84d759045f59994906c093c7202e1e1e1a81faec7b08cc3d3ce61756808215c8"
+    },
+    {
+      "source": "hardware/rf/redstone/tests/test_sequence_tables.py",
+      "destination": "hardware_capture/rf/redstone/tests/test_sequence_tables.py",
+      "source_sha256": "19687b8d69f6cc2a943aa8c097cbd64470298461ebd7e6294e8785f3b89c82f0"
+    },
+    {
+      "source": "hardware/rf/redstone/tests/test_tnmrcontrol.py",
+      "destination": "hardware_capture/rf/redstone/tests/test_tnmrcontrol.py",
+      "source_sha256": "8f3dbed3702544c78ef9a06af7ede771ed86612922ee9e718af54b83d92464e4"
+    },
+    {
+      "source": "hardware/rf/redstone/tests/test_waveform.py",
+      "destination": "hardware_capture/rf/redstone/tests/test_waveform.py",
+      "source_sha256": "ac8eed1fc4d327d5615bd6e7416613ba4b1a1b6ccb48000da210d7d0260cf361"
+    },
+    {
+      "source": "hardware/rf/redstone/tnmrcontrol.py",
+      "destination": "hardware_capture/rf/redstone/tnmrcontrol.py",
+      "source_sha256": "0be55d6ca1c94d29fa67490d8bdddbb86b49eda02d9695914f5b60cb6dd8996c"
+    },
+    {
+      "source": "hardware/rf/redstone/waveform.py",
+      "destination": "hardware_capture/rf/redstone/waveform.py",
+      "source_sha256": "6912dbc71c4c4b03bf741c4984b7b8374a17ffbac9eeaf75862cd12b1b54f776"
+    },
+    {
+      "source": "hardware/rf/windfreak/chirp.py",
+      "destination": "hardware_capture/rf/windfreak/chirp.py",
+      "source_sha256": "10ac7a65927b3373a71a1a1847f6c229fca2c49e54fb89cad10a97920b281070"
+    },
+    {
+      "source": "hardware/rf/windfreak/example_chirp_ao_control.ipynb",
+      "destination": "hardware_capture/rf/windfreak/example_chirp_ao_control.ipynb",
+      "source_sha256": "8fd262db89c05bd4ba918868d616f52ea5d7dbac2f0175161167fa2b1430830b"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/__init__.py",
+      "destination": "hardware_capture/rf/windfreak/tests/__init__.py",
+      "source_sha256": "3cb1189a9c2d97b21c88f60d8adbe761756c8ed5ecdc23064d37e246eacb4c53"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_chirp_ao_control.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_chirp_ao_control.py",
+      "source_sha256": "9a9500cdd3df701e0ab86e2345e9b49e9b0c92f01719435cedc68b2fb9169c32"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_smoke_test_connect_info.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_api_smoke_test_connect_info.py",
+      "source_sha256": "16df25c0fa00a570236d47114c184e5719c14ffc34842fd9bbba8f2b464739ac"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_test_freq_power_gate_aliases.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_api_test_freq_power_gate_aliases.py",
+      "source_sha256": "f0bcf7ecfd9ac42cb72f9aced48c56bb14aa3266ef2f9fa7b86bb91d7b2f6c17"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_test_reference_aliases.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_api_test_reference_aliases.py",
+      "source_sha256": "3f883fb2554ffd879f88d249eb58171dcbf577a4bc83d0e8b131af58e338ef6a"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_test_soft_reset_wait_lock.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_api_test_soft_reset_wait_lock.py",
+      "source_sha256": "1022c169649e21227f027e22355a1ae4122930e73b2b72b79722693e942fb30d"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_chspacing.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_chspacing.py",
+      "source_sha256": "c3eae147a331c82f3c0968d0f2f073649b76a027b5fa8bb094cd87152e6a2d21"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_communication.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_communication.py",
+      "source_sha256": "54f77225edffd968e2ae3dcdd6e3bb76030ddc71694576ee3543b3735bc9d7a3"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_detector.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_detector.py",
+      "source_sha256": "c99ecb30b07948bd062603e024afff9876985e237a17e7d23e4bc24118d13c14"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_doubler.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_doubler.py",
+      "source_sha256": "201d4a4fc35de6d30a7f64f0ea52c1f7791a085d18209d685f65547f6f9567ce"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_fmcontrol.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_fmcontrol.py",
+      "source_sha256": "9c2973295767877a505809bf3dd6dea5465e602e0ee8109421c2f0279deaf0f0"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_freq.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_freq.py",
+      "source_sha256": "ec864447048a5e9287ed748c38c5989d6fc65ce14eabbeefe3d7412aca0d9587"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_helper.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_helper.py",
+      "source_sha256": "50c8c4af8b91c3a4d513a2e3d8d628b50ea3062c573a4fca6c9e846ee294ea97"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_info.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_info.py",
+      "source_sha256": "733b9e246ed354a1f6e0bd9caf151d69f97b8ca9c6c276bf4ede0e0b13fd06ba"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_outgate.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_outgate.py",
+      "source_sha256": "b5ba29e569afb6ccc559bcd6ae743534bb43afcfa1ded1a0017bbbddf463ae69"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_phase.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_phase.py",
+      "source_sha256": "8e43ced3b6eb3e60fb4d75303b54da48ad74676bec6652164099c7e0850344e7"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_pll.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_pll.py",
+      "source_sha256": "41e885b5b3d3a55b1676bb0b5b0193bfe156fa876987905e0b878d80f3e02154"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_power.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_power.py",
+      "source_sha256": "41bad4e8e368651614e2d910dc5e2aab27a9d2dc7cd90c3b1172a6d78005a1b0"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_ref.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_ref.py",
+      "source_sha256": "8c89cc6e00ad55d62f84ca927cb94fe03fa6ddda23812d655669177652eec63e"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_sweep.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_sweep.py",
+      "source_sha256": "bfd40000810578b7eec8f4e3d9157e16c53f8ac54ae80b01438eb2f55a91729b"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_tempcomp.py",
+      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_tempcomp.py",
+      "source_sha256": "dc8ff2ea3a900f0542b4ba3a972832168feb2741b41e46a0405a0baa1fca8d2a"
+    },
+    {
+      "source": "hardware/rf/windfreak/windfreaksynthnv.py",
+      "destination": "hardware_capture/rf/windfreak/windfreaksynthnv.py",
+      "source_sha256": "751457316a57941bd43c15c92b3341140620844f8de0e033d10e82cc11a984b3"
+    }
+  ],
+  "excluded": [
+    {
+      "source": "hardware/rf/redstone/examples/apply_bb1_waveform_to_nvnmr_freqsweep_ampmod_tables.ipynb",
+      "reason": "Depends on DiamondGUI measurement contracts and experiment data"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/apply_sahs1_beta6_waveform_to_nvnmr_freqsweep_tables.ipynb",
+      "reason": "Depends on DiamondGUI measurement contracts and experiment data"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/1pulse - f1.tps.json",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/20260617_extract_waveform_phase_mod_corrected_FID_edited_sequence_used_tables_only.tps",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/20260617_extract_waveform_phase_mod_corrected_FID_edited_sequence_used_tables_only.tps.json",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/chirp1_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260630_NVNMR_AdiabaticInversionTrain_chirp_waveforms.tnt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260630_NVNMR_AdiabaticInversionTrain_chirp_waveforms.tps",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260630_NVNMR_AdiabaticInversionTrain_chirp_waveforms.tps.json",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260630_NVNMR_AdiabaticInversionTrain_chirp_waveforms_phmod_p180_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260630_NVNMR_AdiabaticInversionTrain_chirp_waveforms_phmod_pn180_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_hs1_waveforms.tnt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_hs1_waveforms.tps",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_hs1_waveforms.tps.json",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_hs1_waveforms_ampmod_p180_amplitude_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_hs1_waveforms_ampmod_pn180_amplitude_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_hs1_waveforms_phmod_p180_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_hs1_waveforms_phmod_pn180_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wurst20_waveforms.tnt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wurst20_waveforms.tps",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wurst20_waveforms.tps.json",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wurst20_waveforms_ampmod_p180_amplitude_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wurst20_waveforms_ampmod_pn180_amplitude_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wurst20_waveforms_phmod_p180_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wurst20_waveforms_phmod_pn180_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wursttanh_n20_beta3_waveforms.tnt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wursttanh_n20_beta3_waveforms.tps",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wursttanh_n20_beta3_waveforms.tps.json",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wursttanh_n20_beta3_waveforms_ampmod_p180_amplitude_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wursttanh_n20_beta3_waveforms_ampmod_pn180_amplitude_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wursttanh_n20_beta3_waveforms_phmod_p180_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/nvnmr_adiabatic_inversion_train/20260704_NVNMR_AdiabaticInversionTrain_AMPM_wursttanh_n20_beta3_waveforms_phmod_pn180_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/one_pulse_waveform_update.tps",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/one_pulse_waveform_update.tps.json",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/one_pulse_waveform_update_deg.tps",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/pulse_phmod/20260630_pulse_phmod_bb1_pi_waveform.tnt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/pulse_phmod/20260630_pulse_phmod_bb1_pi_waveform.tps",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/pulse_phmod/20260630_pulse_phmod_bb1_pi_waveform.tps.json",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/pulse_phmod/20260630_pulse_phmod_bb1_pi_waveform_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/pulse_phmod/20260630_pulse_phmod_chirp_waveform.tnt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/pulse_phmod/20260630_pulse_phmod_chirp_waveform.tps",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/pulse_phmod/20260630_pulse_phmod_chirp_waveform.tps.json",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/generated/pulse_phmod/20260630_pulse_phmod_chirp_waveform_phase_table.txt",
+      "reason": "Cache or generated output"
+    },
+    {
+      "source": "hardware/rf/redstone/examples/nvnmr_nutation_update_2d_tables.ipynb",
+      "reason": "Depends on DiamondGUI measurement contracts and experiment data"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/BPline test.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/BurstMode F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/ExtTrig.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/AmpTest_F1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/cpmg_loopbackdemo F1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/cpmg_loopbackdemo_avg0 F1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/Data2.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/loopback_F1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/loopback_F1_RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/Redstone Attn (Half-D) F1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/Redstone Chirp Demo F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/Redstone Feature Demo (Cond Branch & Half-D) F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/Redstone Freq Switching Demo (Inline) F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/Redstone Freq Switching Demo (Loop w Half-D) F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/Redstone Freq Switching Demo (Looped) F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F1/Sine_F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/AmpTest_F2.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/cpmg_loopbackdemo F2.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/cpmg_loopbackdemo_avg0 F2.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/loopback_F2_RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/Redstone Attn (Half-D) F2.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/Redstone Chirp Demo F2 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/Redstone Feature Demo (Cond Branch & Half-D) F2 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/Redstone Freq Switching Demo (Inline) F2 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/Redstone Freq Switching Demo (Loop w Half-D) F2 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/Redstone Freq Switching Demo (Looped) F2 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/F2/Sine_F2 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/filtertest F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/LO1/Redstone Freq Switching Demo (Loop w Half-D) F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/LO1/Redstone RX Freq Switching Demo (Inline) F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/LO1/Redstone RX Freq Switching Demo (Looped) F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/LO1/Redstone RX PhMod Demo F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/LO1/Sine_F1 RX1.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/loopback_2chs.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/loopback_2chs_whops.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/RX_Blank.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/loopbacks/VariSW_2D.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/nmr expts/F1 13C EtOH 1 pulse nutation.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/nmr expts/F2 13C EtOH 1 pulse nutation.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/nmr expts/F2 13C EtOH 1 pulse.tnt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-data/redstone-lf test data readme.txt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/1pulse - f2.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/1pulse - f3.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/1pulse no ph cyc - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/cosy - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/cosy tppi - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/cpmg - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/jump return-f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/NV-Detection.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/presaturation-f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/Ramsey-NV-Detection.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/sel cosy - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/sel excitation - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/sel tocsy.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/spin echo.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/t1 inv rec - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/tocsy.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/common/WALTZ_90u.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/img/Gradient-Echo 3D w Crusher.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/img/Gradient-Echo Image Single Slice.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/img/Gradient-Echo Multi-Slice w Crusher (v2).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/img/SE_STE for hard pulse calibration.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/img/SE_STE for sinc pulse calibration.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/img/Spin-Echo Multi-Slice w Crusher (v2).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/img/Spin-Echo Single Slice w Crusher (v2).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/1pulse - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/1pulse - f2.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/1pulse - f3.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/1pulse no ph cyc - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/cosy - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/cosy tppi - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/cpmg - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/jump return-f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/presaturation-f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/sel cosy - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/sel excitation - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/sel tocsy.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/spin echo.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/t1 inv rec - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/tocsy.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/common/WALTZ_90u.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/img/Gradient-Echo 3D w Crusher.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/img/Gradient-Echo Image Single Slice.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/img/Gradient-Echo Multi-Slice w Crusher (v2).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/img/SE_STE for hard pulse calibration.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/img/SE_STE for sinc pulse calibration.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/img/Spin-Echo Multi-Slice w Crusher (v2).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/img/Spin-Echo Single Slice w Crusher (v2).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/NQR/90_90 echo.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/NQR/90_determination.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/REDSTONE-hf seq readme.txt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/1pulse x - no dec.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/1pulse x.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp - no phase cyc.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp - nqs.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp - ramp on x ct.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp - seldom.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp - seltics - tppm.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp - seltics.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp - toss - tppm.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp - toss.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp2.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/cp3.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollohf/solids/tppm.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/1pulse - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/1pulse - f2.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/1pulse - f3.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/1pulse no ph cyc - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/cosy - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/cosy tppi - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/cpmg - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/jump return-f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/presaturation-f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/sel cosy - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/sel excitation - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/sel tocsy.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/spin echo.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/t1 inv rec - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/tocsy.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/common/WALTZ_90u.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/img/Gradient-Echo 3D w Crusher.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/img/Gradient-Echo Image Single Slice.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/img/Gradient-Echo Multi-Slice w Crusher (v2).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/img/SE_STE for hard pulse calibration.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/img/SE_STE for sinc pulse calibration.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/img/Spin-Echo Multi-Slice w Crusher (v2).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/img/Spin-Echo Single Slice w Crusher (v2).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/REDSTONE-lf seq readme.txt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/1pulse - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/1pulse x - no dec.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/1pulse x.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp - no phase cyc.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp - nqs.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp - ramp on x ct.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp - seldom.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp - seltics - tppm.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp - seltics.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp - toss - tppm.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp - toss.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp2.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/cp3.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/apollolf/solids/tppm.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/1pulse - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/1pulse no ph cyc - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/cosy - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/cosy tppi - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/cpmg - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/jump return-f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/presaturation-f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/sel cosy - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/sel excitation - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/sel tocsy.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/spin echo.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/t1 inv rec - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/CAT/common/tocsy.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/Cat & LapNMR seq readme.txt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/1pulse - Nutation.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/1pulse.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/cosy tppi.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/NOESY.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/NQR P90 Determination.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/Presat_1pulse F1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/quadecho.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/T1 inv rec.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/T1rho.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/cat_lap/LapNMR/T2 CPMG Windowed Detection.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/1 pulse with BB dec.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/1331 Solvent Suppression.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/1D N.O.Diff multiple 02.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/1D N.O.Diff spectroscopy.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/1D-INADEQUATE.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/2D J-Resolved C13.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/2D J_resolved H1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/2D-INADEQUATE.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/90 H1 decoupler pulse-duration.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/APT.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/C13 one-pulse.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/cd",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/COSY (tppi).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/COSY.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/Cross Polarization.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/dec calibration.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/DEPT-2D.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/DEPT.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/DEPT135.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/dir",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/DQF COSY (tppi).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/file list.exe",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/filelist.txt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/gated decoupling (4.11).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/H1 one-pulse.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/HETCOR.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/heteronuclear Overhauser effect (4.15).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/homodecouple.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/homonuclear dec calibration.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/INEPT+.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/INEPT.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/Long-Range COSY.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/low power decoupling (4.13).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/NOESY.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/PENDANT.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/Presat water suppression.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/probe tune.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/readme.txt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/Refocused INEPT.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/required.txt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/Sensitivity (3.10).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/single frequency decoupling (4.13).tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/T1-C13.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/T1-H1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/T2-H1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/t2script.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/dspect/TOSS.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/library/orion/orion seq readme.txt",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/1pulse - f1.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/1pulse x - no dec.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/1pulse x.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp - no phase cyc.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp - nqs.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp - ramp on x ct.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp - seldom.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp - seltics - tppm.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp - seltics.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp - toss - tppm.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp - toss.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp2.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/cp3.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-sequences/solids/tppm.tps",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Acquisition/Scripted 2D acquisition.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Acquisition/Set New SW.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Acquisition/Set Obs Freq.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/DSPect/DSPect Homo Decoupling.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/HowTo.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/imaging scripts/4d FT for CSI.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/imaging scripts/Field-of-View 3D (w offset).vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/imaging scripts/Field-of-View 3D.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/imaging scripts/Field-of-View MS.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/imaging scripts/MS Process and Display.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/imaging scripts/Slice Setup MS (w offset).vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/imaging scripts/Slice Setup MS.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/imaging scripts/Te-Tr Setup GRE.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/imaging scripts/Te-Tr Setup SE MS.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Misc/Chirp Generator.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Misc/filtertest LapNMR.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Misc/filtertest.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Misc/RS232 Script Demo.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Misc/Sample Temp Control Demo.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Misc/SaveTNMRPrefs.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Misc/TNMR Default Paths.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/2D RuSH Processing.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/2D Shearing.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/2D TPPI Processing.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/AddSubtract (single records).vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/AddSubtract 2D.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/Auto Process 1D.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/AutoProcEcho.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/cpmg proc setup.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/MS Process and Display.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/MS Process.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/MS Transpose.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/multi point to single point.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Processing/Process 2D (Magnitude).vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/RFControl.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/SampleInterface.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/shim example scripts/Autoshim (axials).vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/shim example scripts/Autoshim (complete - no spin).vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/shim example scripts/Autoshim (complete - spin).vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/TecmagLock.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/temp.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Update_ADCs.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/examples/tnmr-vbs/Update_Spin_Rate.vbs",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/MANUAL_INDEX.md",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/Contacting Tecmag.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/DSPect Users Guide.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/Dual Rcvr Notes.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/Installation Guides.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/MAS Probe Spin Control tutorial 2013.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/Scout Installation.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/StartManual.cmd",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/TecManual.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/TNMR Installation Instructions.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/Using the Gradient Rotation Module.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/Using the Online Guides.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/redstone/references/manuals/tecmag/VNC setup.pdf",
+      "reason": "Additional vendor library; retained in source repository"
+    },
+    {
+      "source": "hardware/rf/windfreak/run_windfreak_synthnvpro_page.sh",
+      "reason": "Dash GUI outside standalone acquisition/control scope"
+    },
+    {
+      "source": "hardware/rf/windfreak/windfreak_synthnvpro_page.py",
+      "reason": "Dash GUI outside standalone acquisition/control scope"
+    }
+  ]
+}

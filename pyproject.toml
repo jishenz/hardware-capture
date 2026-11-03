@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hardware-capture"
+version = "0.1.0"
+description = "Oscilloscope acquisition, RF instrument control, and waveform analysis."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy>=1.26,<3",
+    "scipy>=1.13,<2",
+    "matplotlib>=3.6,<4",
+]
+
+[project.optional-dependencies]
+scope = ["pyvisa>=1.16.2"]
+tnmr = ["pywin32==311; sys_platform == 'win32'"]
+windfreak = ["pyserial==3.5", "nidaqmx==0.9.0"]
+notebooks = ["jupyterlab>=4,<5", "ipykernel>=6,<7", "pandas>=2.2,<3"]
+
+[dependency-groups]
+dev = ["pytest>=8,<9"]
+
+[tool.setuptools.packages.find]
+include = ["hardware_capture*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"*" = ["*.tps", "*.tnt", "*.csv", "*.md", "*.ipynb"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers --basetemp=.pytest_cache/tmp -m 'not hardware and not integration'"
+testpaths = [
+    "hardware_capture/oscilloscope/tests",
+    "hardware_capture/rf/redstone/tests",
+    "hardware_capture/rf/redstone/closed_loop_optimizer/tests",
+    "hardware_capture/rf/windfreak/tests/test_chirp_ao_control.py",
+]
+markers = [
+    "unit: pure logic or fake-backed tests",
+    "hardware: requires physical instruments",
+    "integration: requires an instrument integration environment",
+    "slow: longer-running coverage",
+]
+norecursedirs = [".git", ".venv", "__pycache__", ".ipynb_checkpoints", "results", "generated"]

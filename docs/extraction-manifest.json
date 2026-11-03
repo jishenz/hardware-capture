@@ -333,126 +333,6 @@
       "source": "hardware/rf/redstone/waveform.py",
       "destination": "hardware_capture/rf/redstone/waveform.py",
       "source_sha256": "6912dbc71c4c4b03bf741c4984b7b8374a17ffbac9eeaf75862cd12b1b54f776"
-    },
-    {
-      "source": "hardware/rf/windfreak/chirp.py",
-      "destination": "hardware_capture/rf/windfreak/chirp.py",
-      "source_sha256": "10ac7a65927b3373a71a1a1847f6c229fca2c49e54fb89cad10a97920b281070"
-    },
-    {
-      "source": "hardware/rf/windfreak/example_chirp_ao_control.ipynb",
-      "destination": "hardware_capture/rf/windfreak/example_chirp_ao_control.ipynb",
-      "source_sha256": "8fd262db89c05bd4ba918868d616f52ea5d7dbac2f0175161167fa2b1430830b"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/__init__.py",
-      "destination": "hardware_capture/rf/windfreak/tests/__init__.py",
-      "source_sha256": "3cb1189a9c2d97b21c88f60d8adbe761756c8ed5ecdc23064d37e246eacb4c53"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_chirp_ao_control.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_chirp_ao_control.py",
-      "source_sha256": "9a9500cdd3df701e0ab86e2345e9b49e9b0c92f01719435cedc68b2fb9169c32"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_smoke_test_connect_info.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_api_smoke_test_connect_info.py",
-      "source_sha256": "16df25c0fa00a570236d47114c184e5719c14ffc34842fd9bbba8f2b464739ac"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_test_freq_power_gate_aliases.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_api_test_freq_power_gate_aliases.py",
-      "source_sha256": "f0bcf7ecfd9ac42cb72f9aced48c56bb14aa3266ef2f9fa7b86bb91d7b2f6c17"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_test_reference_aliases.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_api_test_reference_aliases.py",
-      "source_sha256": "3f883fb2554ffd879f88d249eb58171dcbf577a4bc83d0e8b131af58e338ef6a"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_test_soft_reset_wait_lock.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_api_test_soft_reset_wait_lock.py",
-      "source_sha256": "1022c169649e21227f027e22355a1ae4122930e73b2b72b79722693e942fb30d"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_chspacing.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_chspacing.py",
-      "source_sha256": "c3eae147a331c82f3c0968d0f2f073649b76a027b5fa8bb094cd87152e6a2d21"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_communication.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_communication.py",
-      "source_sha256": "54f77225edffd968e2ae3dcdd6e3bb76030ddc71694576ee3543b3735bc9d7a3"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_detector.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_detector.py",
-      "source_sha256": "c99ecb30b07948bd062603e024afff9876985e237a17e7d23e4bc24118d13c14"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_doubler.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_doubler.py",
-      "source_sha256": "201d4a4fc35de6d30a7f64f0ea52c1f7791a085d18209d685f65547f6f9567ce"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_fmcontrol.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_fmcontrol.py",
-      "source_sha256": "9c2973295767877a505809bf3dd6dea5465e602e0ee8109421c2f0279deaf0f0"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_freq.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_freq.py",
-      "source_sha256": "ec864447048a5e9287ed748c38c5989d6fc65ce14eabbeefe3d7412aca0d9587"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_helper.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_helper.py",
-      "source_sha256": "50c8c4af8b91c3a4d513a2e3d8d628b50ea3062c573a4fca6c9e846ee294ea97"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_info.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_info.py",
-      "source_sha256": "733b9e246ed354a1f6e0bd9caf151d69f97b8ca9c6c276bf4ede0e0b13fd06ba"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_outgate.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_outgate.py",
-      "source_sha256": "b5ba29e569afb6ccc559bcd6ae743534bb43afcfa1ded1a0017bbbddf463ae69"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_phase.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_phase.py",
-      "source_sha256": "8e43ced3b6eb3e60fb4d75303b54da48ad74676bec6652164099c7e0850344e7"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_pll.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_pll.py",
-      "source_sha256": "41e885b5b3d3a55b1676bb0b5b0193bfe156fa876987905e0b878d80f3e02154"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_power.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_power.py",
-      "source_sha256": "41bad4e8e368651614e2d910dc5e2aab27a9d2dc7cd90c3b1172a6d78005a1b0"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_ref.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_ref.py",
-      "source_sha256": "8c89cc6e00ad55d62f84ca927cb94fe03fa6ddda23812d655669177652eec63e"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_sweep.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_sweep.py",
-      "source_sha256": "bfd40000810578b7eec8f4e3d9157e16c53f8ac54ae80b01438eb2f55a91729b"
-    },
-    {
-      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_tempcomp.py",
-      "destination": "hardware_capture/rf/windfreak/tests/test_windfreaksynthnv_tempcomp.py",
-      "source_sha256": "dc8ff2ea3a900f0542b4ba3a972832168feb2741b41e46a0405a0baa1fca8d2a"
-    },
-    {
-      "source": "hardware/rf/windfreak/windfreaksynthnv.py",
-      "destination": "hardware_capture/rf/windfreak/windfreaksynthnv.py",
-      "source_sha256": "751457316a57941bd43c15c92b3341140620844f8de0e033d10e82cc11a984b3"
     }
   ],
   "excluded": [
@@ -1787,6 +1667,102 @@
     {
       "source": "hardware/rf/windfreak/windfreak_synthnvpro_page.py",
       "reason": "Dash GUI outside standalone acquisition/control scope"
+    },
+    {
+      "source": "hardware/rf/windfreak/chirp.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/example_chirp_ao_control.ipynb",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/__init__.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_chirp_ao_control.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_smoke_test_connect_info.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_test_freq_power_gate_aliases.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_test_reference_aliases.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_api_test_soft_reset_wait_lock.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_chspacing.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_communication.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_detector.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_doubler.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_fmcontrol.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_freq.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_helper.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_info.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_outgate.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_phase.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_pll.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_power.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_ref.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_sweep.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/tests/test_windfreaksynthnv_tempcomp.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
+    },
+    {
+      "source": "hardware/rf/windfreak/windfreaksynthnv.py",
+      "reason": "Removed from standalone repository at user request on 2026-11-03"
     }
   ]
 }

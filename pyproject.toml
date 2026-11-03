@@ -17,7 +17,6 @@ dependencies = [
 [project.optional-dependencies]
 scope = ["pyvisa>=1.16.2"]
 tnmr = ["pywin32==311; sys_platform == 'win32'"]
-windfreak = ["pyserial==3.5", "nidaqmx==0.9.0"]
 notebooks = ["jupyterlab>=4,<5", "ipykernel>=6,<7", "pandas>=2.2,<3"]
 
 [dependency-groups]
@@ -36,7 +35,6 @@ testpaths = [
     "hardware_capture/oscilloscope/tests",
     "hardware_capture/rf/redstone/tests",
     "hardware_capture/rf/redstone/closed_loop_optimizer/tests",
-    "hardware_capture/rf/windfreak/tests/test_chirp_ao_control.py",
 ]
 markers = [
     "unit: pure logic or fake-backed tests",

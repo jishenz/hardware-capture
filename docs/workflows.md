@@ -1,6 +1,6 @@
 # Workflows
 
-## Offline analysis and calibration
+## Analysis and calibration entry points
 
 Use the scripts in `hardware_capture/oscilloscope/examples/`:
 
@@ -9,7 +9,9 @@ Use the scripts in `hardware_capture/oscilloscope/examples/`:
 - `scope_rf_robustness_heatmap.py`: measured-pulse robustness analysis.
 - `scope_rf_best_axis_xpi_heatmap.py`: best-axis X(pi) analysis.
 
-Each supports `--help`. Review the input CSV and calibration values before running. A sample capture is included at `hardware_capture/oscilloscope/tests/pulse1_008.csv`. Individual scripts retain their original lab-specific defaults; these are not universal calibration values.
+Each supports `--help`. Only the BB1 calibration entry point currently has a raw-waveform CSV input path, selected by the source-level `INPUT_CSV` setting. The square calibration and both heatmap entry points acquire from a live scope (or read its current stored trace); they do not provide a raw-waveform CSV CLI option. Their underlying numerical functions can be called with in-memory data. The optional heatmap amplitude/phase CSV files are intended-command overlays, not measured-waveform inputs.
+
+A sample capture is included at `hardware_capture/oscilloscope/tests/pulse1_008.csv`. Individual scripts retain their original lab-specific defaults; these are not universal calibration values. Read the [complete input catalog](project-catalog.md) before selecting an entry point.
 
 ## Scope acquisition
 
@@ -39,7 +41,7 @@ The notebooks cover waveform construction, TPS/JSON export, paired TNT/TPS templ
 Run notebooks with this repository's kernel:
 
 ```powershell
-uv sync --extra notebooks --extra tnmr --extra scope --extra windfreak
+uv sync --extra notebooks --extra tnmr --extra scope
 uv run jupyter lab
 ```
 
@@ -49,24 +51,6 @@ The [closed-loop guide](../hardware_capture/rf/redstone/closed_loop_optimizer/RE
 
 The synthetic demo and fake-backed tests validate software behavior only. The extraction has not been validated on physical instruments.
 
-## Windfreak and NI analog output
-
-```python
-from hardware_capture.rf.windfreak.windfreaksynthnv import SynthNVPro
-from hardware_capture.rf.windfreak.chirp import FMChirpAOcontrol
-```
-
-Connection settings can be overridden before starting Python:
-
-```powershell
-$env:WF_NV_PORT = "COM4"
-$env:NI_CH_FM_ANALOG = "Dev1/ao3"
-$env:NI_CH_FM_TRIG = "/Dev1/PFI1"
-$env:TNMR_APPLICATION_PROGID = "NTNMR.Application"
-```
-
-The port and channels shown are inherited examples. The AO controller retains its 0–2.5 V clamp. The serial controller retains its existing RF gate/mute methods. The Windfreak tests folder also contains operator-run hardware diagnostics; these are outside default test discovery and have not been executed during extraction.
-
 ## Test selection
 
-`uv run pytest` selects scope unit tests, Redstone offline/fake-COM tests, closed-loop fake-device tests, and the optional NI waveform logic test. The NI test is skipped when its Python dependency is absent. No hardware connection is required. Hardware/integration markers are excluded by default.
+`uv run pytest` selects scope unit tests, Redstone offline/fake-COM tests, and closed-loop fake-device tests. No hardware connection is required. Hardware/integration markers are excluded by default.

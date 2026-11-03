@@ -10,7 +10,6 @@ The source working tree contained a modified `test_rf_analysis.py` and two untra
 | --- | --- |
 | `hardware/oscilloscope/` | `hardware_capture/oscilloscope/` |
 | `hardware/rf/redstone/` | `hardware_capture/rf/redstone/` |
-| `hardware/rf/windfreak/` | `hardware_capture/rf/windfreak/` |
 | Selected values from `hardware/config.py` | Minimal `hardware_capture/config.py` with environment overrides |
 
 ## Adaptations
@@ -28,7 +27,7 @@ The oscillator capture and RF control code retain their separate source provenan
 ## Excluded material
 
 - DiamondGUI Dash pages, task runtime, hardware manager, and unrelated instruments.
-- Windfreak's Dash page and its launcher.
+- All Windfreak content, including its serial controller, NI analog-output controller, examples, tests, configuration, and optional dependencies, removed at the user's request on November 3, 2026. The initial extraction commit remains in Git history; the current repository no longer contains that subsystem.
 - Generated captures, plots, exported sequences, caches, and notebook output payloads.
 - The larger vendor example library and manuals outside the selected TNMR control/file-format references. One vendor TPS example required by tests is included.
 - Three notebooks tied to DiamondGUI's measurement contracts and experiment data:
@@ -38,7 +37,7 @@ The oscillator capture and RF control code retain their separate source provenan
 
 The omitted notebooks remain available in the source repository. Their functionality belongs to experiment orchestration and would require a separate extraction of `measurement/tnmr_file.py` and its contracts/data.
 
-The [machine-readable manifest](extraction-manifest.json) records every copied source path and its original SHA-256, source Git status, and selected exclusions. Checksums refer to the files before import/path adaptation. Generated caches and capture outputs are excluded without itemizing every file.
+The [machine-readable manifest](extraction-manifest.json) records the currently retained source paths and their original SHA-256, source Git status, and selected exclusions. Removed source paths are recorded as exclusions. Checksums refer to the files before import/path adaptation. Generated caches and capture outputs are excluded without itemizing every file.
 
 ## Independence
 

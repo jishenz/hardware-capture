@@ -281,18 +281,6 @@ wheels = [
 ]
 
 [[package]]
-name = "deprecation"
-version = "2.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "packaging" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/5a/d3/8ae2869247df154b64c1884d7346d412fed0c49df84db635aab2d1c40e62/deprecation-2.1.0.tar.gz", hash = "sha256:72b3bde64e5d778694b0cf68178aed03d15e15477116add3fb773e581f9518ff", size = 173788, upload-time = "2020-04-20T14:23:38.738Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/02/c3/253a89ee03fc9b9682f1541728eb66db7db22148cd94f89ab22528cd1e1b/deprecation-2.1.0-py2.py3-none-any.whl", hash = "sha256:a10811591210e1fb0e768a8c25517cabeabcba6f0bf96564f8ff45189f90b14a", size = 11178, upload-time = "2020-04-20T14:23:36.581Z" },
-]
-
-[[package]]
 name = "executing"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -368,10 +356,6 @@ scope = [
 tnmr = [
     { name = "pywin32", marker = "sys_platform == 'win32'" },
 ]
-windfreak = [
-    { name = "nidaqmx" },
-    { name = "pyserial" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -383,26 +367,16 @@ requires-dist = [
     { name = "ipykernel", marker = "extra == 'notebooks'", specifier = ">=6,<7" },
     { name = "jupyterlab", marker = "extra == 'notebooks'", specifier = ">=4,<5" },
     { name = "matplotlib", specifier = ">=3.6,<4" },
-    { name = "nidaqmx", marker = "extra == 'windfreak'", specifier = "==0.9.0" },
     { name = "numpy", specifier = ">=1.26,<3" },
     { name = "pandas", marker = "extra == 'notebooks'", specifier = ">=2.2,<3" },
-    { name = "pyserial", marker = "extra == 'windfreak'", specifier = "==3.5" },
     { name = "pyvisa", marker = "extra == 'scope'", specifier = ">=1.16.2" },
     { name = "pywin32", marker = "sys_platform == 'win32' and extra == 'tnmr'", specifier = "==311" },
     { name = "scipy", specifier = ">=1.13,<2" },
 ]
-provides-extras = ["scope", "tnmr", "windfreak", "notebooks"]
+provides-extras = ["scope", "tnmr", "notebooks"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8,<9" }]
-
-[[package]]
-name = "hightime"
-version = "0.2.2"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/f6/79c14ef38f75a2a554ac4e0c285d6c23a142fc37bae6633ef46140c61e44/hightime-0.2.2-py3-none-any.whl", hash = "sha256:5109a449bb3a75dbf305147777de71634c91b943d47cfbee18ed2f34a8307e0b", size = 9705, upload-time = "2024-04-04T16:36:04.452Z" },
-]
 
 [[package]]
 name = "httpcore"
@@ -938,20 +912,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nidaqmx"
-version = "0.9.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "deprecation" },
-    { name = "hightime" },
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/37/bdd981bbf1ed800b06770895763d6b76f7a009a1b3bc617286d90ee08d4e/nidaqmx-0.9.0.tar.gz", hash = "sha256:08e3f5f3369fb71116df8fb1e5577ecbbda1530058b16bf4b8be3145c2ffcd96", size = 440211, upload-time = "2023-12-19T22:39:26.82Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/46/b3d25d06631da886bcc12fe51212c57fbf63944d57880fd119c937327802/nidaqmx-0.9.0-py3-none-any.whl", hash = "sha256:8f79c4929f19f8dca3c19d517ccb7f9a76850e4c80a78ac2a9e7f5f5743cc700", size = 480537, upload-time = "2023-12-19T22:39:24.25Z" },
-]
-
-[[package]]
 name = "notebook-shim"
 version = "0.2.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1162,15 +1122,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e4/11/b213bebff182584360cb8d17c72c1677fec5c5c228de439e63bcf8ab1c8f/pyparsing-3.3.3.tar.gz", hash = "sha256:928ae7e20211f3b6f3915a72f06a0cfd29ab9d24279dd6346b6b1a7146397d36", size = 1050487, upload-time = "2026-09-20T20:59:05.609Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/38/bb/d215ee7c73b61497b28a5503f9f53523f294fcc936762b7caf90e0c1c2b5/pyparsing-3.3.3-py3-none-any.whl", hash = "sha256:ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4", size = 126420, upload-time = "2026-09-20T20:59:04.025Z" },
-]
-
-[[package]]
-name = "pyserial"
-version = "3.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1e/7d/ae3f0a63f41e4d2f6cb66a5b57197850f919f59e558159a4dd3a818f5082/pyserial-3.5.tar.gz", hash = "sha256:3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb", size = 159125, upload-time = "2020-11-23T03:59:15.045Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl", hash = "sha256:c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0", size = 90585, upload-time = "2020-11-23T03:59:13.41Z" },
 ]
 
 [[package]]

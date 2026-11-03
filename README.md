@@ -2,7 +2,9 @@
 
 Python tools for oscilloscope acquisition, RF instrument control, and captured-waveform analysis, extracted from DiamondGUI.
 
-The main workflow is **prepare RF tables → upload through TNMR → trigger and capture with RIGOL → analyze the measured waveform**. Windfreak serial control and NI-DAQmx FM output are included as a separate RF backend.
+The main workflow is **prepare RF tables → upload through TNMR → trigger and capture with RIGOL → analyze the measured waveform**.
+
+See the [complete project and input catalog](docs/project-catalog.md) for every script, notebook, numerical component, input format, and experimental assumption.
 
 ## Setup
 
@@ -16,10 +18,10 @@ uv run pytest
 The default environment supports offline analysis and fake-backed tests. Add the extras needed for your instruments:
 
 ```powershell
-uv sync --extra scope --extra tnmr --extra windfreak --extra notebooks
+uv sync --extra scope --extra tnmr --extra notebooks
 ```
 
-Live RIGOL access requires a suitable VISA runtime. TNMR automation requires Windows, Tecmag TNMR, and its registered COM server. NI analog output requires the NI-DAQmx driver. These native applications and drivers are not installed by `uv`.
+Live RIGOL access requires a suitable VISA runtime. TNMR automation requires Windows, Tecmag TNMR, and its registered COM server. These native applications and drivers are not installed by `uv`.
 
 ## Repository map
 
@@ -34,7 +36,6 @@ Live RIGOL access requires a suitable VISA runtime. TNMR automation requires Win
 | `hardware_capture/rf/redstone/closed_loop_optimizer/` | TNMR upload / scope capture loop, phase calibration, and pulse optimization |
 | `hardware_capture/rf/redstone/examples/` | Standalone sequence-editing and TNMR notebooks |
 | `hardware_capture/rf/redstone/references/` | Selected Tecmag manuals and the sequence fixture used by examples/tests |
-| `hardware_capture/rf/windfreak/` | SynthNV Pro serial control and NI analog-output chirps |
 | `hardware_capture/config.py` | Minimal connection settings, with environment overrides |
 | `docs/` | Workflow guide, extraction scope, provenance, and validation results |
 

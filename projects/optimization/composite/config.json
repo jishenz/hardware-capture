@@ -5,7 +5,7 @@
     "duration_s": 0.00006, "samples": 6000, "max_rabi_hz": 160000
   },
   "calibration": {"rabi_at_100_hz": 160000},
-  "optimization": {"updates": 1000},
+  "optimization": {"updates": 1000, "coefficients": 125},
   "spsa": {
     "directions": 1,
     "seed": 20260820,

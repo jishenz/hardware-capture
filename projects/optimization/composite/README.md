@@ -67,8 +67,11 @@ amplitude-100 calibration. Its total rotation area is 5*pi, producing X(pi):
 entries, even if their old lengths differ, and checks full numeric readback
 before the first capture. The first candidate preserves the exact phase steps;
 it is not a smoothed spline approximation. Subsequent phases are the fixed BB1
-baseline plus spline corrections initialized to zero. Adam optimizes 1500
-amplitude logits and 1500 phase-correction coefficients. Original tables,
+baseline plus spline corrections initialized to zero. Adam optimizes 125
+amplitude logits and 125 phase-correction coefficients (250 parameters total).
+The coefficient count divides the 6000 samples exactly: 6000 / 125 = 48.
+Spline controls overlap; this does not split the pulse into constant 48-sample blocks.
+Original tables,
 including their original lengths, are retained for failure restoration.
 
 ## Processing
@@ -301,8 +304,8 @@ inspection, not automatic resume.
 ### BB1 experiment (human operator; 1000 updates by default)
 
 `run_15_epochs.py` now uses `config.json`: 1000 SPSA updates starting from
-configured symmetric BB1 X(pi), 60 us, 6000 samples, and 1500 amplitude plus
-1500 phase coefficients. The current saved sequence resolves six square/target
+configured symmetric BB1 X(pi), 60 us, 6000 samples, and 125 amplitude plus
+125 phase coefficients. The current saved sequence resolves six square/target
 pairs per record. With the 99% acceptance rule, one direction means 3004–6004
 records: initial seed, 2000 probes, 1000–4000 center trials, and three independent
 final verifications. Previews report these bounds; summaries report actual counts.
@@ -371,9 +374,11 @@ validate physical timing, calibration, wiring, duty cycle, or safety.
 
 ### DiamondGUI resolution settings (2026-11-06)
 
-The local/example hardware profiles now use 1500 coefficients per family and
-6000 samples. Device-free previews for composite, live, and phase-reference
-resolve 3000 adjustable parameters and 6000 samples. The composite BB1 remains
+At the time of this validation, the local/example hardware profiles used 1500
+coefficients per family and 6000 samples. Device-free previews for composite,
+live, and phase-reference resolved 3000 adjustable parameters and 6000 samples.
+The current composite preset overrides this with 125 coefficients per family.
+The composite BB1 remains
 60 us at 26.041667% amplitude, with nominal 10 ns sample dwell. Three focused
 BB1 initialization, table-length restoration, and invalid-grid tests passed
 in 4.52 s with physical-device constructors blocked. Notebook JSON/code-cell

@@ -95,20 +95,56 @@ The initial capture measures the exact configured BB1 seed. Each update then
 measures opposite simultaneous perturbations of amplitude logits and phase
 coefficients about the same center. Each probe goes through its own complete
 N-pair calibration and averaging. Their complete losses give the SPSA gradient:
-`g_j = (loss_plus - loss_minus) / (2 * c_j * Delta_j)`. Adam updates the center
-only after all requested pairs succeed. No GRAPE derivative or identity
-hardware Jacobian is used. The scalar objective and its weights are unchanged.
+`g_j = (loss_plus - loss_minus) / (2 * c_j * Delta_j)`. All requested pairs must
+succeed before Adam proposes an update. No GRAPE derivative or identity
+hardware Jacobian is used.
+
+### Ideal-condition fidelity acceptance (99%)
+
+The project preset enables `composite.minimum_center_fidelity=0.99`. Both scan
+axes must contain exact zero, so the check uses zero amplitude error and zero
+detuning, not a nearby grid point. The initial measured seed must pass before
+optimization starts.
+
+SPSA uses `search_loss = robustness_loss + 10 * max(0, 0.99 - center_fidelity)`
+with the configured `center_penalty_weight=10`. The original robustness loss
+and its weights remain unchanged and are saved separately. The penalty guides
+the search; measured acceptance enforces the floor.
+
+After each Adam proposal, measure the proposed center. If its fidelity is below
+99%, retry at half, quarter, and one-eighth of the original parameter change
+(`maximum_backtracks=3`). Commit the first passing proposal. If all fail,
+retain both previous parameters and Adam moments/step, and restore the last
+accepted command tables. These checks enforce fidelity, not monotonic loss.
+Temporary probes and failed trials can fall below 99%; they are not accepted
+updates or eligible final pulses.
+
+Select the lowest robustness loss only among passing seeds, probes, and accepted
+centers. Before exporting a successful result, independently capture the chosen
+pulse three times (`verification_captures=3`); every capture must pass. Failure
+aborts export and follows the existing stop/completion/original-table cleanup.
+This fidelity is computed from captured RF and the spin model.
+
+`history.csv` plots accepted centers (or retained previous measurements after a
+rejection) and the best passing candidate. Probe robustness losses and penalized
+search losses are separate columns. Every trial has its own measurement archive;
+`epoch_NNNN_acceptance.json` records trial scales and decisions. Checkpoints
+include the accepted center's measurement path and fidelity.
+
+The acceptance settings are enabled in this project's preset, including its
+15-update child preset. Custom configurations that omit all four acceptance
+settings retain the legacy unconstrained behavior.
 
 The shared `spsa` defaults match DiamondGUI's initial scales: 0.08 in amplitude
 logit units, 0.05 radians in phase coefficients, decay exponent 0.101, seed
 20260820, and one direction per update. Scales decrease with the update index;
 probe order alternates. More directions average independent gradient estimates.
-The lower-loss probe is eligible for best-candidate selection, independently of
-the unmeasured center that Adam updates. At completion, the best actual measured
-candidate is restored and measured again without an update.
+Passing probes are eligible for best-candidate selection along with measured,
+accepted centers. At completion, the best passing candidate is restored and
+verified without an update.
 
-With N=6 and 10 updates, one direction gives 22 scope records: one initial,
-20 probe records, and one final verification. Each record contains six pairs.
+With N=6 and 10 updates, one direction gives 34–64 scope records: one initial,
+20 probes, 10–40 center trials, and three final verifications. Each record contains six pairs.
 An incomplete/invalid pair retains available evidence but cannot update Adam
 or advance the last complete checkpoint.
 
@@ -199,9 +235,10 @@ Each run creates a timestamped output folder containing:
   per-pair calibration, command parameters, loss, fidelity grid, and scan axes.
 - `epoch_NNNN_spsa.npz`: center, signs, scales, plus/minus parameters and losses,
   capture order, and the mean full-loss gradient.
-- `final_verification.npz` and `_raw.npz`: an independent measurement after
-  restoring the best actual candidate. Summary reports both its selection loss
-  and final verification loss without conflating them.
+- `final_verification.npz`, `final_verification_002.npz`,
+  `final_verification_003.npz`, and their `_raw.npz` files: independent captures
+  after restoring the best passing candidate. Summary reports all verification
+  losses/fidelities separately from selection loss.
 - `composite_schedule.json`, resolved/effective configuration, and original
   numeric TNMR tables for diagnosis or operator-led recovery.
 - `initial_seed/`: initial pulse CSV/metadata and TNMR amplitude/phase text
@@ -211,7 +248,9 @@ Each run creates a timestamped output folder containing:
   `amplitude_coefficients`, `amplitude_maximum`, and
   `amplitude_parameterization="sigmoid"`. Checkpoint moments are named
   `amplitude_logit_first` and `amplitude_logit_second` and belong to logit space.
-  Checkpoints mark the updated center as unmeasured and link its SPSA evidence.
+  With fidelity acceptance enabled, checkpoints link the accepted center's
+  measured fidelity and retain its parameters and moments after a rejected update.
+  Legacy unconstrained checkpoints mark the proposed center as unmeasured.
   Old amplitude-space checkpoints are not interchangeable; automatic resume
   remains unsupported.
 - `history.csv`, `checkpoint_latest.npz` after updates, `best_heatmap.png`, and
@@ -264,8 +303,9 @@ inspection, not automatic resume.
 `run_15_epochs.py` now uses `config.json`: 1000 SPSA updates starting from
 configured symmetric BB1 X(pi), 60 us, 6000 samples, and 1500 amplitude plus
 1500 phase coefficients. The current saved sequence resolves six square/target
-pairs per record. One direction means 2002 records: initial seed, 2000 probe
-records, and independent final verification of the restored best candidate.
+pairs per record. With the 99% acceptance rule, one direction means 3004–6004
+records: initial seed, 2000 probes, 1000–4000 center trials, and three independent
+final verifications. Previews report these bounds; summaries report actual counts.
 The legacy script filename is retained for existing commands. It honors
 `optimization.updates` in the selected configuration; there is no early
 convergence stop. The optional `--config projects/optimization/composite/config-15-epochs.json`
@@ -292,10 +332,11 @@ human approval. After approval, the human operator may run:
 
 The run prints its output folder and per-epoch losses. `history.csv` and
 `loss_curve.png` update after each completed epoch. Epoch zero is the initial
-BB1; epochs 1-15 select the lower-loss actual probe (or lowest across directions).
-The plot also shows each direction-mean +/- loss, best measured loss so far,
-and a separate final-verification marker. These are measured candidates; the
-unmeasured Adam center is not presented as an evaluated loss. A failed pair
+BB1; subsequent epochs show the measured accepted center or the previous accepted
+measurement retained after rejection. The plot also shows each direction-mean
+probe robustness loss, best loss meeting the fidelity floor, and the last final
+verification marker. All final verification measurements remain in the CSV.
+A failed pair
 leaves the last complete loss curve, CSV, available raw records, and checkpoint.
 
 On success the best measured target tables remain loaded. On failure the

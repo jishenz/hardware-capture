@@ -117,7 +117,7 @@ Probe order alternates across updates/directions. Probe sizes are distinct from
 Adam learning rates and maximum update steps. Hardware performance and suitable
 perturbation sizes still require experimental validation.
 
-A run measures the initial seed, uses `2 * directions` candidate evaluations
+Without composite fidelity acceptance, a run measures the initial seed, uses `2 * directions` candidate evaluations
 per update, then restores and independently measures the best actual candidate
 (initial or perturbed). The final Adam center is saved as unmeasured; it is
 never reported as a measured best pulse. The reference-only/zero-update live
@@ -127,6 +127,28 @@ candidate record contains all N square/target pairs, freshly calibrated before
 complex averaging. For 10 updates and one direction, composite takes 22 records.
 Original live phase-reference captures are additional to these candidate counts.
 Dry-run plans report effective settings and candidate counts without connecting.
+
+The composite project preset enables a measured ideal-condition acceptance rule:
+
+| `composite` setting | Preset | Meaning |
+|---|---|---|
+| `minimum_center_fidelity` | 0.99 | Minimum fidelity at exactly zero amplitude error and detuning; both axes must contain zero |
+| `center_penalty_weight` | 10.0 | SPSA adds this times `max(0, minimum_center_fidelity - center_fidelity)` to robustness loss |
+| `maximum_backtracks` | 3 | After a failed full update, test half, quarter, and one-eighth changes |
+| `verification_captures` | 3 | All independent final captures must meet the floor before success/export |
+
+The floor is expressed as a fraction: 0.99 means 99%, and 99 is rejected.
+The penalty, backtrack count, and verification count default to the values above
+when the floor is configured. Omitting all four settings preserves legacy behavior.
+The initial seed must pass. New centers are measured and accepted only when
+they pass; exhausting retries retains the previous parameters and Adam state.
+Best-candidate selection excludes subthreshold probes even if their loss is lower.
+Final verification failure aborts export and invokes existing failure cleanup.
+With acceptance enabled, capture bounds are
+`1 + updates * (2 * directions + 1) + verification_captures` through
+`1 + updates * (2 * directions + 1 + maximum_backtracks) + verification_captures`.
+The accepted-center history keeps penalized search losses separate from raw
+robustness losses; per-update acceptance JSON files preserve trial decisions.
 
 Each successful update saves `epoch_NNNN_spsa.npz` with the center, both probe
 parameter vectors, signs, scales, losses, capture order, and full gradient.

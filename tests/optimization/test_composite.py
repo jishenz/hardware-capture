@@ -958,3 +958,185 @@ def test_15_update_bb1_run_writes_real_loss_history_with_fake_devices(
     from hardware_capture.optimization.history import plot_saved_history
 
     assert plot_saved_history(tmp_path) == tmp_path / "loss_curve.png"
+
+
+def scripted_acceptance_run(monkeypatch, values, *, updates=1):
+    """Use real acquisition/update plumbing with controlled (loss, fidelity) outcomes."""
+    config = config_for_test().with_updates(
+        optimization={"updates": updates},
+        composite={"minimum_center_fidelity": 0.99},
+    )
+    plan = schedule(3)
+    tnmr = FakeTNMR()
+    monkeypatch.setattr(workflow, "prepare", lambda config: (config, plan))
+    monkeypatch.setattr(
+        workflow,
+        "demodulate_raw_rf",
+        lambda raw, **kwargs: SimpleNamespace(time=raw.time, z=raw.voltage),
+    )
+    monkeypatch.setattr(workflow, "_heatmap", lambda *args, **kwargs: None)
+    real_objective = workflow.robustness_objective
+    outcomes = iter(values)
+
+    def evaluate(*args):
+        result = real_objective(*args)
+        loss, fidelity = next(outcomes)
+        return replace(
+            result,
+            objective=replace(result.objective, loss=loss, center_fidelity=fidelity),
+        )
+
+    monkeypatch.setattr(workflow, "robustness_objective", evaluate)
+    return config, tnmr, FakeScope(tnmr, plan)
+
+
+def test_fidelity_floor_backtracks_and_excludes_better_infeasible_probe(
+    tmp_path, monkeypatch
+):
+    import csv
+    import json
+
+    config, tnmr, scope = scripted_acceptance_run(
+        monkeypatch,
+        [
+            (0.5, 0.995),  # Seed.
+            (0.1, 0.95),
+            (0.6, 0.995),  # Lower-loss probe must not win.
+            (0.2, 0.98),
+            (0.4, 0.99),  # Full step fails; half step passes exactly.
+            (0.4, 0.99),
+            (0.4, 0.991),
+            (0.4, 0.992),
+        ],
+    )
+    result = workflow.run_composite(config, tmp_path, tnmr=tnmr, scope=scope)
+    assert result["best_loss"] == 0.4
+    assert result["best_center_fidelity"] == 0.99
+    assert result["minimum_verified_center_fidelity"] == 0.99
+    assert len(result["final_verifications"]) == 3
+    assert result["candidate_evaluations"] == tnmr.shots == 8
+    with np.load(tmp_path / "epoch_0001_spsa.npz") as pair:
+        # SPSA sees robustness loss + 10 * ideal-fidelity shortfall.
+        assert pair["plus_losses"][0] == pytest.approx(0.5)
+        center, gradient = pair["center_parameters"], pair["gradient"]
+    z, _ = workflow.adam_update(
+        center[:10], gradient[:10], None, learning_rate=0.02, maximum_step=0.02
+    )
+    phase, _ = workflow.adam_update(
+        center[10:], gradient[10:], None, learning_rate=0.02, maximum_step=0.1
+    )
+    with np.load(tmp_path / "checkpoint_latest.npz") as checkpoint:
+        assert checkpoint["amplitude_logits"] == pytest.approx((center[:10] + z) / 2)
+        assert checkpoint["phase_coefficients_rad"] == pytest.approx(
+            (center[10:] + phase) / 2
+        )
+        assert checkpoint["adam_step"] == 1
+        assert checkpoint["center_is_measured"]
+        assert checkpoint["center_fidelity"] == 0.99
+    decisions = json.loads((tmp_path / "epoch_0001_acceptance.json").read_text())
+    assert [a["accepted"] for a in decisions["attempts"]] == [False, True]
+    rows = list(csv.DictReader((tmp_path / "history.csv").open()))
+    assert rows[1]["kind"] == "accepted_center"
+    assert float(rows[1]["spsa_plus_loss_mean"]) == 0.1
+    assert float(rows[1]["spsa_plus_search_loss_mean"]) == pytest.approx(0.5)
+    assert float(rows[1]["best_feasible_loss"]) == 0.4
+
+
+def test_rejected_updates_retain_parameters_and_adam_state(tmp_path, monkeypatch):
+    import json
+
+    # Both probes and all four trial sizes fail in each of two updates.
+    bad_update = [(0.1, 0.95), (0.2, 0.96)] + [(0.1, 0.98)] * 4
+    config, tnmr, scope = scripted_acceptance_run(
+        monkeypatch, [(0.5, 0.995)] + bad_update * 2 + [(0.5, 0.995)] * 3, updates=2
+    )
+    result = workflow.run_composite(config, tmp_path, tnmr=tnmr, scope=scope)
+    assert result["best_epoch"] == 0
+    assert tnmr.shots == 16
+    with (
+        np.load(tmp_path / "epoch_0001_spsa.npz") as first,
+        np.load(tmp_path / "epoch_0002_spsa.npz") as second,
+    ):
+        assert second["center_parameters"] == pytest.approx(first["center_parameters"])
+    with np.load(tmp_path / "checkpoint_latest.npz") as checkpoint:
+        assert checkpoint["adam_step"] == 0
+        assert not checkpoint["update_accepted"]
+        assert np.all(checkpoint["amplitude_logit_first"] == 0)
+        assert np.all(checkpoint["phase_second"] == 0)
+        assert checkpoint["center_fidelity"] == 0.995
+    decisions = json.loads((tmp_path / "epoch_0002_acceptance.json").read_text())
+    assert not decisions["accepted"]
+    assert [a["step_scale"] for a in decisions["attempts"]] == [1, 0.5, 0.25, 0.125]
+    assert parse_numeric_table(tnmr.tables["amp"]) == pytest.approx(
+        tnmr.shot_tables[0]["amp"]
+    )
+
+
+@pytest.mark.parametrize("failure", ["seed", "verification"])
+def test_fidelity_failure_cannot_export_success(tmp_path, monkeypatch, failure):
+    values = (
+        [(0.1, 0.98)]
+        if failure == "seed"
+        else [(0.5, 0.995), (0.5, 0.995), (0.1, 0.98)]
+    )
+    config, tnmr, scope = scripted_acceptance_run(monkeypatch, values, updates=0)
+    original = dict(tnmr.tables)
+    with pytest.raises(ValueError, match="fidelity floor"):
+        workflow.run_composite(config, tmp_path, tnmr=tnmr, scope=scope)
+    assert tnmr.tables == original
+    assert tnmr.stopped
+    assert not (tmp_path / "summary.json").exists()
+    assert not (tmp_path / "pulse.csv").exists()
+    if failure == "verification":
+        assert (tmp_path / "verification_failure.json").exists()
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"minimum_center_fidelity": 99},
+        {"minimum_center_fidelity": True},
+        {"minimum_center_fidelity": 0},
+        {"center_penalty_weight": 0},
+        {"maximum_backtracks": -1},
+        {"maximum_backtracks": 1.5},
+        {"verification_captures": 0},
+        {"verification_captures": True},
+    ],
+)
+def test_acceptance_options_fail_in_preview(monkeypatch, options):
+    monkeypatch.setattr(workflow, "load_sequence_file", lambda _: sequence_fixture())
+    config = config_for_test().with_updates(
+        tnmr={"path": "not-opened.tnt"},
+        composite={"minimum_center_fidelity": 0.99, **options},
+    )
+    with pytest.raises(ValueError, match="composite"):
+        workflow.prepare(config)
+
+
+def test_acceptance_preview_requires_actual_ideal_point(monkeypatch):
+    from hardware_capture.api import plan
+
+    monkeypatch.setattr(workflow, "load_sequence_file", lambda _: sequence_fixture())
+    config = config_for_test().with_updates(
+        tnmr={"path": "not-opened.tnt"}, composite={"minimum_center_fidelity": 0.99}
+    )
+    preview = plan("optimize-composite", config)["optimizer"]
+    assert preview["acceptance"]["minimum_center_fidelity"] == 0.99
+    assert preview["candidate_evaluations_min"] == 7
+    assert preview["candidate_evaluations_max"] == 10
+    with pytest.raises(ValueError, match="exact zero"):
+        workflow.prepare(config.with_updates(scan={"amplitude_errors": [-0.1, 0.1]}))
+
+
+def test_composite_preset_enables_99_percent_floor():
+    import json
+    from pathlib import Path
+
+    preset = json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "projects/optimization/composite/config.json"
+        ).read_text()
+    )
+    assert preset["composite"]["minimum_center_fidelity"] == 0.99

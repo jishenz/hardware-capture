@@ -132,6 +132,15 @@ def plan(project: str, config) -> dict:
             "parameters": 2 * count, "table_samples": entries, "spsa": asdict(spsa),
             "candidate_evaluations": 2 + 2 * spsa.directions * updates,
         }
+        acceptance = composite_optimize.FidelityAcceptance.from_options(effective.section("composite"))
+        if acceptance:
+            minimum, maximum = acceptance.capture_bounds(updates, spsa.directions)
+            details["optimizer"].pop("candidate_evaluations")
+            details["optimizer"].update({
+                "acceptance": asdict(acceptance),
+                "candidate_evaluations_min": minimum,
+                "candidate_evaluations_max": maximum,
+            })
     elif project in {"optimize-offline", "optimize-live", "phase-reference"}:
         optimize.settings(config)
         optimize.objective(config)

@@ -23,10 +23,19 @@ def write_loss_curve(history: list[dict], path: Path) -> Path:
         raise ValueError("Loss history has no measured candidates")
     epochs = np.array([int(row["epoch"]) for row in training])
     losses = np.array([float(row["loss"]) for row in training])
+    constrained = "minimum_center_fidelity" in training[0]
     if not np.all(np.isfinite(losses)):
         raise ValueError("Measured losses must be finite")
     figure, ax = subplots(figsize=(9, 5))
-    ax.plot(epochs, losses, "o-", label="Selected measured candidate", linewidth=1.5)
+    ax.plot(
+        epochs,
+        losses,
+        "o-",
+        label="Accepted center (retained after rejection)"
+        if constrained
+        else "Selected measured candidate",
+        linewidth=1.5,
+    )
     for key, label in (
         ("spsa_plus_loss_mean", "SPSA + loss (direction mean)"),
         ("spsa_minus_loss_mean", "SPSA - loss (direction mean)"),
@@ -37,9 +46,11 @@ def write_loss_curve(history: list[dict], path: Path) -> Path:
             ax.plot(epochs[valid], values[valid], ".--", alpha=0.6, label=label)
     ax.step(
         epochs,
-        np.minimum.accumulate(losses),
+        np.array([float(row["best_feasible_loss"]) for row in training])
+        if constrained
+        else np.minimum.accumulate(losses),
         where="post",
-        label="Best measured so far",
+        label="Best meeting fidelity floor" if constrained else "Best measured so far",
         linewidth=2,
     )
     verified = [row for row in history if row.get("kind") == "final_verification"]

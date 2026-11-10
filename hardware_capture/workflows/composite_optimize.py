@@ -13,6 +13,7 @@ from scipy.optimize import lsq_linear
 from hardware_capture.configuration import Experiment
 from hardware_capture.devices.rigol import RigolDHO, WaveformCaptureConfig
 from hardware_capture.devices.tnmr import TNMRControl
+from hardware_capture.optimization.acceptance import FidelityAcceptance
 from hardware_capture.optimization.amplitude import amplitude_logits, sigmoid_amplitude
 from hardware_capture.optimization.composite import (
     capture_schedule,
@@ -21,6 +22,7 @@ from hardware_capture.optimization.composite import (
     schedule_from_sequence,
 )
 from hardware_capture.optimization.core import (
+    AdamState,
     adam_update,
     clamped_bspline_design_matrix,
     command_tables,
@@ -61,7 +63,15 @@ def prepare(config: Experiment):
         raise ValueError("Set the known square-reference calibration.rabi_at_100_hz")
     effective = config.with_updates(pulse={"duration_s": schedule.target_duration_s})
     settings(effective)
-    objective(effective)
+    robustness = objective(effective)
+    acceptance = FidelityAcceptance.from_options(options)
+    if acceptance and (
+        not np.any(robustness.amplitude_errors == 0)
+        or not np.any(robustness.detuning_ratios == 0)
+    ):
+        raise ValueError(
+            "Fidelity acceptance requires exact zero amplitude error and detuning in the scan"
+        )
     SPSAConfig(**effective.section("spsa")).validate()
     if {"amplitude_learning_rate", "amplitude_step"} & config.section(
         "optimization"
@@ -261,6 +271,7 @@ def run_composite(
     scope_options = effective.section("scope")
     demod = effective.section("demodulation")
     reduction_options = effective.section("composite")
+    acceptance = FidelityAcceptance.from_options(reduction_options)
     spsa = SPSAConfig(**effective.section("spsa"))
     spsa.validate()
     spline = clamped_bspline_design_matrix(entries, count)
@@ -350,6 +361,8 @@ def run_composite(
 
         candidate_count = 0
         total_candidates = 2 + 2 * spsa.directions * updates
+        if acceptance:
+            _, total_candidates = acceptance.capture_bounds(updates, spsa.directions)
 
         def measure(parameters, label, description=None):
             nonlocal modified, candidate_count
@@ -357,6 +370,7 @@ def run_composite(
             timings = {}
             display = (
                 f"{description or label} | capture {candidate_count}/{total_candidates}"
+                + (" maximum" if acceptance else "")
             )
 
             def stage(name):
@@ -441,6 +455,13 @@ def run_composite(
                 )
             if not math.isfinite(evaluation.objective.loss):
                 raise ValueError("Measured composite loss is not finite")
+            search_loss = (
+                acceptance.search_loss(
+                    evaluation.objective.loss, evaluation.objective.center_fidelity
+                )
+                if acceptance
+                else evaluation.objective.loss
+            )
             path = directory / f"{label}.npz"
             with stage("save_reduced"):
                 np.savez_compressed(
@@ -457,6 +478,8 @@ def run_composite(
                     command_phase_unwrapped_rad=command_phase,
                     fidelity=evaluation.objective.fidelity,
                     loss=evaluation.objective.loss,
+                    search_loss=search_loss,
+                    center_fidelity=evaluation.objective.center_fidelity,
                     amplitude_errors=robustness.amplitude_errors,
                     detuning_hz=robustness.detuning_ratios * reference,
                 )
@@ -464,18 +487,52 @@ def run_composite(
                 "parameters": parameters.copy(),
                 "path": path,
                 "evaluation": evaluation,
+                "search_loss": search_loss,
                 "percent": percent,
                 "command_phase": command_phase,
             }
 
         amplitude_state = phase_state = None
+        if acceptance:
+            amplitude_state = AdamState(np.zeros(count), np.zeros(count))
+            phase_state = AdamState(np.zeros(count), np.zeros(count))
         history = []
         best = None
         best_epoch = 0
 
-        def record(candidate, epoch, kind, estimate=None):
+        def consider_best(candidate, epoch):
             nonlocal best, best_epoch
             evaluation = candidate["evaluation"]
+            if acceptance and not acceptance.accepts(
+                evaluation.objective.center_fidelity
+            ):
+                return
+            if (
+                best is None
+                or evaluation.objective.loss < best["evaluation"].objective.loss
+            ):
+                best, best_epoch = candidate, epoch
+                _heatmap(
+                    directory / "best_heatmap.png",
+                    evaluation,
+                    robustness,
+                    reference,
+                    title=f"Mean of {schedule.repetitions} calibrated targets, epoch {epoch}",
+                )
+
+        def record(
+            candidate,
+            epoch,
+            kind,
+            estimate=None,
+            *,
+            accepted=True,
+            step_scale=0.0,
+            probes=(),
+        ):
+            evaluation = candidate["evaluation"]
+            if kind != "final_verification":
+                consider_best(candidate, epoch)
             history.append(
                 {
                     **_history_row(epoch, evaluation),
@@ -490,32 +547,82 @@ def run_composite(
                     "spsa_capture_order": ";".join(estimate.capture_order)
                     if estimate
                     else "",
+                    **(
+                        {
+                            "minimum_center_fidelity": acceptance.minimum_center_fidelity,
+                            "meets_fidelity_floor": acceptance.accepts(
+                                evaluation.objective.center_fidelity
+                            ),
+                            "update_accepted": accepted,
+                            "step_scale": step_scale,
+                            "best_feasible_loss": best["evaluation"].objective.loss
+                            if best
+                            else math.nan,
+                            "spsa_plus_search_loss_mean": float(
+                                np.mean(estimate.plus_losses)
+                            )
+                            if estimate
+                            else math.nan,
+                            "spsa_minus_search_loss_mean": float(
+                                np.mean(estimate.minus_losses)
+                            )
+                            if estimate
+                            else math.nan,
+                            # Keep plotted probe losses in the same units as robustness loss.
+                            "spsa_plus_loss_mean": float(
+                                np.mean(
+                                    [
+                                        p["evaluation"].objective.loss
+                                        for sign, p in probes
+                                        if sign == "plus"
+                                    ]
+                                )
+                            )
+                            if probes
+                            else math.nan,
+                            "spsa_minus_loss_mean": float(
+                                np.mean(
+                                    [
+                                        p["evaluation"].objective.loss
+                                        for sign, p in probes
+                                        if sign == "minus"
+                                    ]
+                                )
+                            )
+                            if probes
+                            else math.nan,
+                        }
+                        if acceptance
+                        else {}
+                    ),
                 }
             )
             _write_history(directory / "history.csv", history)
             write_loss_curve(history, directory / "loss_curve.png")
             label = f"Epoch {epoch:02d}/{updates:02d}" if kind == "spsa" else kind
             print(f"{label}: loss={evaluation.objective.loss:.9g}", flush=True)
-            if kind != "final_verification" and (
-                best is None
-                or evaluation.objective.loss < best["evaluation"].objective.loss
-            ):
-                best, best_epoch = candidate, epoch
-                _heatmap(
-                    directory / "best_heatmap.png",
-                    evaluation,
-                    robustness,
-                    reference,
-                    title=f"Mean of {schedule.repetitions} calibrated targets, epoch {epoch}",
-                )
 
         # Measure the exact seed before any temporary SPSA perturbation.
-        record(measure(np.r_[logits, phase], "epoch_0000", "Initial BB1"), 0, "initial")
+        current = measure(np.r_[logits, phase], "epoch_0000", "Initial BB1")
+        if acceptance and not acceptance.accepts(
+            current["evaluation"].objective.center_fidelity
+        ):
+            raise ValueError(
+                "Initial pulse fails the ideal-condition fidelity floor; optimization not started"
+            )
+        record(current, 0, "initial")
         for epoch in range(1, updates + 1):
             candidates = []
+            probes = []
 
             def probe(
-                parameters, direction, member, *, epoch=epoch, candidates=candidates
+                parameters,
+                direction,
+                member,
+                *,
+                epoch=epoch,
+                candidates=candidates,
+                probes=probes,
             ):
                 candidate = measure(
                     parameters,
@@ -523,7 +630,8 @@ def run_composite(
                     f"Epoch {epoch:02d}/{updates:02d}, direction {direction + 1}/{spsa.directions}, {member} probe",
                 )
                 candidates.append(candidate)
-                return candidate["evaluation"].objective.loss
+                probes.append((member, candidate))
+                return candidate["search_loss"]
 
             estimate = estimate_spsa(
                 np.r_[logits, phase], probe, config=spsa, epoch=epoch - 1
@@ -536,8 +644,9 @@ def run_composite(
             selected = min(
                 candidates, key=lambda item: item["evaluation"].objective.loss
             )
-            record(selected, epoch, "spsa", estimate)
-            logits, amplitude_state = adam_update(
+            if not acceptance:
+                record(selected, epoch, "spsa", estimate)
+            proposed_logits, proposed_amplitude_state = adam_update(
                 logits,
                 estimate.gradient[:count],
                 amplitude_state,
@@ -546,13 +655,85 @@ def run_composite(
                 ),
                 maximum_step=reduction_options.get("amplitude_logit_step", 0.02),
             )
-            phase, phase_state = adam_update(
+            proposed_phase, proposed_phase_state = adam_update(
                 phase,
                 estimate.gradient[count:],
                 phase_state,
                 learning_rate=opts.get("phase_learning_rate", 0.02),
                 maximum_step=opts.get("phase_step_rad", 0.1),
             )
+            if acceptance:
+                for candidate in candidates:
+                    consider_best(candidate, epoch)
+                center = np.r_[logits, phase]
+                change = np.r_[proposed_logits, proposed_phase] - center
+                accepted = False
+                attempts = []
+                step_scale = 0.0
+                for backtrack in range(acceptance.maximum_backtracks + 1):
+                    scale = 0.5**backtrack
+                    trial = measure(
+                        center + scale * change,
+                        f"epoch_{epoch:04d}_trial_{backtrack:03d}",
+                        f"Epoch {epoch}, proposed update at {scale:g} scale",
+                    )
+                    passed = acceptance.accepts(
+                        trial["evaluation"].objective.center_fidelity
+                    )
+                    attempts.append(
+                        {
+                            "measurement_path": str(trial["path"]),
+                            "center_fidelity": trial[
+                                "evaluation"
+                            ].objective.center_fidelity,
+                            "step_scale": scale,
+                            "accepted": passed,
+                        }
+                    )
+                    if passed:
+                        current, accepted, step_scale = trial, True, scale
+                        logits, phase = np.split(trial["parameters"].copy(), 2)
+                        amplitude_state, phase_state = (
+                            proposed_amplitude_state,
+                            proposed_phase_state,
+                        )
+                        break
+                if not accepted:
+                    # Reject both parameter and Adam-state changes. Leave hardware
+                    # at the last accepted command, not the last failed trial.
+                    _wait_idle(tnmr, scope_options)
+                    _verify_parameters(tnmr, schedule)
+                    upload_tables_with_readback(
+                        tnmr,
+                        amplitude_table_name=controls["amplitude_table"],
+                        phase_table_name=controls["phase_table"],
+                        amplitude_percent=current["percent"],
+                        phase_degrees=np.mod(np.rad2deg(current["command_phase"]), 360),
+                    )
+                write_json(
+                    directory / f"epoch_{epoch:04d}_acceptance.json",
+                    {
+                        "minimum_center_fidelity": acceptance.minimum_center_fidelity,
+                        "accepted": accepted,
+                        "attempts": attempts,
+                        "retained_measurement_path": str(current["path"]),
+                    },
+                )
+                record(
+                    current,
+                    epoch,
+                    "accepted_center" if accepted else "retained_center",
+                    estimate,
+                    accepted=accepted,
+                    step_scale=step_scale,
+                    probes=probes,
+                )
+            else:
+                logits, phase = proposed_logits, proposed_phase
+                amplitude_state, phase_state = (
+                    proposed_amplitude_state,
+                    proposed_phase_state,
+                )
             amplitude, _ = sigmoid_amplitude(logits, maximum)
             np.savez_compressed(
                 directory / "checkpoint_latest.npz",
@@ -571,16 +752,53 @@ def run_composite(
                 phase_first=phase_state.first_moment,
                 phase_second=phase_state.second_moment,
                 adam_step=amplitude_state.step,
-                center_is_measured=False,
+                center_is_measured=acceptance is not None,
+                **(
+                    {
+                        "center_measurement_path": str(current["path"]),
+                        "center_fidelity": current[
+                            "evaluation"
+                        ].objective.center_fidelity,
+                        "minimum_center_fidelity": acceptance.minimum_center_fidelity,
+                        "update_accepted": accepted,
+                    }
+                    if acceptance
+                    else {}
+                ),
                 best_epoch=best_epoch,
                 best_measurement_path=str(best["path"]),
             )
         # Restore and independently measure the best actual candidate, not the
         # unmeasured Adam center or an average of the +/- command parameters.
-        final = measure(
-            best["parameters"], "final_verification", "Final best-pulse verification"
-        )
-        record(final, updates + 1, "final_verification")
+        verifications = []
+        for index in range(acceptance.verification_captures if acceptance else 1):
+            label = (
+                "final_verification"
+                if index == 0
+                else f"final_verification_{index + 1:03d}"
+            )
+            final = measure(best["parameters"], label, "Final best-pulse verification")
+            record(final, updates + 1, "final_verification")
+            verifications.append(
+                {
+                    "measurement_path": str(final["path"]),
+                    "center_fidelity": final["evaluation"].objective.center_fidelity,
+                    "loss": final["evaluation"].objective.loss,
+                }
+            )
+            if acceptance and not acceptance.accepts(
+                final["evaluation"].objective.center_fidelity
+            ):
+                write_json(
+                    directory / "verification_failure.json",
+                    {
+                        "measurements": verifications,
+                        "minimum_center_fidelity": acceptance.minimum_center_fidelity,
+                    },
+                )
+                raise ValueError(
+                    "Final verification fails the ideal-condition fidelity floor; pulse not exported"
+                )
         artifacts = Pulse(
             duration, best["percent"] * reference / 100, best["command_phase"]
         ).save(directory, rabi_at_100_hz=reference)
@@ -600,7 +818,21 @@ def run_composite(
             "gradient_hardware_jacobian": "included through paired full-loss measurements",
             "spsa": asdict(spsa),
             "averaging": "mean of individually calibrated and time-aligned complex target I/Q before each loss evaluation",
-            "candidate_evaluations": 2 + 2 * spsa.directions * updates,
+            "candidate_evaluations": candidate_count,
+            **(
+                {
+                    "acceptance": asdict(acceptance),
+                    "best_center_fidelity": best[
+                        "evaluation"
+                    ].objective.center_fidelity,
+                    "final_verifications": verifications,
+                    "minimum_verified_center_fidelity": min(
+                        v["center_fidelity"] for v in verifications
+                    ),
+                }
+                if acceptance
+                else {}
+            ),
             "loss_history_path": str(directory / "history.csv"),
             "loss_curve_path": str(directory / "loss_curve.png"),
         }

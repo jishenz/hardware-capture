@@ -38,6 +38,10 @@ JSON and TOML configurations support `extends`. Relative paths resolve from the 
 
 ## Hardware entry points
 
+For per-pair square referencing and averaging before full-loss SPSA/Adam, see the new
+[repeated square/target optimizer](projects/optimization/composite/README.md).
+Its local preset uses 160 kHz at 100% and 60 us total for both pulses.
+
 ```powershell
 uv sync --extra scope --extra tnmr
 uv run hc check optimize-live -c projects/optimization/live/config.json
@@ -61,7 +65,7 @@ uv run hc run optimize-live -c projects/optimization/live/config.json --live
 | `hardware_capture/optimization` | Cubic splines, GRAPE gradients, Adam and measured closed loop |
 | `hardware_capture/workflows` | Shared orchestration behind `api.run` and `hc` |
 | `hardware_capture/resources` | Capture fixtures, matched sequence templates and selected references |
-| `projects` | 26 task presets, English READMEs and thin notebooks |
+| `projects` | Task presets, English READMEs and thin notebooks |
 | `tests` | Numerical and fake-device regression tests |
 
 The [project catalog](projects/README.md) lists every small project. The [migration map](docs/project-catalog.md) explains where each former notebook/script went. Historical extraction provenance is in [extraction notes](docs/extraction.md).

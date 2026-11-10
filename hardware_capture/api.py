@@ -1,13 +1,23 @@
 """Public workflow API. Configuration checks never connect to an instrument."""
 from __future__ import annotations
 
+from dataclasses import asdict
 from pathlib import Path
 
 from hardware_capture.configuration import Experiment, positive
 from hardware_capture.pulses.conditions import generate
-from hardware_capture.workflows import common, calibrate, analyze, sequence, tnmr, optimize
+from hardware_capture.workflows import (
+    analyze,
+    calibrate,
+    common,
+    composite_optimize,
+    optimize,
+    sequence,
+    tnmr,
+)
 
 PROJECTS = {
+    "optimize-composite": "Optimize X(pi) after per-pair square calibration and coherent repetition averaging",
     "capture": "Save raw RF from the scope or copy a compatible capture CSV",
     "calibrate-square": "Calibrate volts-to-Rabi from a known square pulse",
     "calibrate-bb1": "Calibrate volts-to-Rabi from a complete BB1 envelope",
@@ -35,8 +45,9 @@ def plan(project: str, config) -> dict:
     if project not in PROJECTS:
         raise ValueError(f"Unknown project {project!r}; choose {', '.join(PROJECTS)}")
     source = config.section("input").get("kind", "csv")
+    details = {}
     raw_projects = {"capture", "calibrate-square", "calibrate-bb1", "analyze"}
-    requires_hardware = project in {"tnmr", "phase-reference", "optimize-live"} or (project in raw_projects and source == "scope")
+    requires_hardware = project in {"tnmr", "phase-reference", "optimize-live", "optimize-composite"} or (project in raw_projects and source == "scope")
     if requires_hardware:
         for name in ["timeout_ms", "trigger_timeout_s", "armed_timeout_s", "poll_s"]:
             value = config.section("scope").get(name)
@@ -105,14 +116,37 @@ def plan(project: str, config) -> dict:
         if settings.get("action") == "clear_tables":
             if Path(config.require("tnmr", "save_path")).resolve() == Path(settings["path"]).resolve():
                 raise ValueError("Clear tables requires a separate output TNT")
+    elif project == "optimize-composite":
+        effective, schedule = composite_optimize.prepare(config)
+        details["composite_schedule"] = asdict(schedule)
+        capture_scope = effective.section("scope")
+        details["capture_window"] = {
+            "mode": effective.section("composite").get("capture_window", "configured"),
+            "start_s": capture_scope.get("window_start_s", -10e-6),
+            "end_s": capture_scope.get("window_end_s", 100e-6),
+        }
+        _, _, _, _, entries, count, updates, _ = optimize.settings(effective)
+        spsa = composite_optimize.SPSAConfig(**effective.section("spsa"))
+        details["optimizer"] = {
+            "gradient_method": "spsa", "amplitude_parameterization": "sigmoid",
+            "parameters": 2 * count, "table_samples": entries, "spsa": asdict(spsa),
+            "candidate_evaluations": 2 + 2 * spsa.directions * updates,
+        }
     elif project in {"optimize-offline", "optimize-live", "phase-reference"}:
         optimize.settings(config)
         optimize.objective(config)
         if project == "optimize-offline":
             optimize.initial_coefficients(config)
         else:
-            optimize.hardware_config(config, Path(config.section("output").get("directory", "outputs")), phase_only=project == "phase-reference")
-    return {"project": project, "description": PROJECTS[project], "hardware": requires_hardware, "input_kind": source if project in raw_projects else "configuration", "target": "fixed_xpi" if project.startswith("optimize") or project == "phase-reference" else config.section("analysis").get("target"), "output_directory": config.section("output").get("directory", str(Path.cwd() / "outputs")), "config": config.data}
+            hardware = optimize.hardware_config(config, Path(config.section("output").get("directory", "outputs")), phase_only=project == "phase-reference")
+            details["optimizer"] = {
+                "gradient_method": "spsa", "amplitude_parameterization": "sigmoid",
+                "parameters": 2 * hardware.coefficient_count, "table_samples": hardware.table_entry_count,
+                "spsa": asdict(hardware.spsa),
+                "candidate_evaluations": 1 + 2 * hardware.spsa.directions * hardware.update_count + bool(hardware.update_count),
+                "additional_phase_reference_captures": hardware.phase_reference_captures + int(hardware.initial_amplitude_coefficients is not None),
+            }
+    return {"project": project, "description": PROJECTS[project], "hardware": requires_hardware, "input_kind": source if project in raw_projects else "configuration", "target": "fixed_xpi" if project.startswith("optimize") or project == "phase-reference" else config.section("analysis").get("target"), "output_directory": config.section("output").get("directory", str(Path.cwd() / "outputs")), "config": config.data, **details}
 
 
 def run(project: str, config, *, live: bool = False, scope=None, tnmr_device=None) -> dict:
@@ -140,6 +174,8 @@ def run(project: str, config, *, live: bool = False, scope=None, tnmr_device=Non
         result = sequence.edit(config, directory)
     elif project == "tnmr":
         result = tnmr.control(config, directory, tnmr=tnmr_device)
+    elif project == "optimize-composite":
+        result = composite_optimize.run_composite(config, directory, scope=scope, tnmr=tnmr_device)
     elif project == "optimize-offline":
         result = optimize.offline(config, directory)
     else:

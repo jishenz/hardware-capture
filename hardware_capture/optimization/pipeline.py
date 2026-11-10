@@ -6,31 +6,35 @@ import csv
 import json
 import math
 import re
+import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from hardware_capture.figures import subplots
 from typing import Any
 
 import numpy as np
 
-from hardware_capture.signal.demodulation import (
-    DemodulatedWaveform,
-    PulseWindow,
-    demodulate_raw_rf,
-    detect_pulse_window,
-)
 from hardware_capture.devices.rigol import (
     RigolDHO,
     ScopeWaveform,
     WaveformCaptureConfig,
 )
 from hardware_capture.devices.tnmr import TNMRControl
+from hardware_capture.figures import subplots
+from hardware_capture.signal.demodulation import (
+    DemodulatedWaveform,
+    PulseWindow,
+    demodulate_raw_rf,
+    detect_pulse_window,
+)
 
+from .amplitude import amplitude_logits as logits_from_amplitudes
+from .amplitude import sigmoid_amplitude
 from .core import (
     AdamState,
     GrapeEvaluation,
     PhaseReference,
+    PulseEvaluation,
     RobustnessConfig,
     adam_update,
     apply_phase_reference,
@@ -38,14 +42,11 @@ from .core import (
     clamped_bspline_design_matrix,
     command_tables,
     estimate_phase_reference,
-    polar_control_gradients,
-    robustness_grape_gradient,
+    robustness_objective,
 )
+from .spsa import SPSAConfig, estimate_spsa
 
-
-_NUMBER_RE = re.compile(
-    r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
-)
+_NUMBER_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?")
 
 
 @dataclass(frozen=True)
@@ -90,9 +91,9 @@ class ClosedLoopConfig:
     cvar_weight: float = 0.15
     cvar_confidence: float = 0.95
     update_count: int = 100
-    amplitude_learning_rate: float = 0.02
+    amplitude_logit_learning_rate: float = 0.02
     phase_learning_rate: float = 0.02
-    maximum_amplitude_coefficient_step: float = 0.02
+    maximum_amplitude_logit_step: float = 0.02
     maximum_phase_coefficient_step_rad: float = 0.10
     scope_timeout_ms: int = 30000
     trigger_timeout_s: float = 30.0
@@ -102,8 +103,19 @@ class ClosedLoopConfig:
     maximum_amplitude_fraction: float = 1.0
     initial_amplitude_coefficients: tuple[float, ...] | None = None
     initial_phase_coefficients_rad: tuple[float, ...] | None = None
+    spsa: SPSAConfig = field(default_factory=SPSAConfig)
 
     def validate(self) -> None:
+        self.spsa.validate()
+        for name in (
+            "amplitude_logit_learning_rate",
+            "maximum_amplitude_logit_step",
+            "phase_learning_rate",
+            "maximum_phase_coefficient_step_rad",
+        ):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
         if not self.tnt_path.exists():
             raise ValueError(f"TNMR document does not exist: {self.tnt_path}")
         if not self.amplitude_table_name.strip() or not self.phase_table_name.strip():
@@ -127,7 +139,9 @@ class ClosedLoopConfig:
         if self.coefficient_count <= self.spline_degree:
             raise ValueError("coefficient_count must exceed spline_degree.")
         if self.table_entry_count < self.coefficient_count:
-            raise ValueError("table_entry_count must not be smaller than coefficient_count.")
+            raise ValueError(
+                "table_entry_count must not be smaller than coefficient_count."
+            )
         if self.phase_reference_captures < 2:
             raise ValueError("At least two phase-reference captures are required.")
         if self.update_count < 0:
@@ -140,15 +154,26 @@ class ClosedLoopConfig:
                 raise ValueError("Configured pulse end exceeds the scope window.")
         if not 0 < self.maximum_amplitude_fraction <= 1:
             raise ValueError("maximum_amplitude_fraction must be in (0, 1]")
-        if (self.initial_amplitude_coefficients is None) != (self.initial_phase_coefficients_rad is None):
+        if (self.initial_amplitude_coefficients is None) != (
+            self.initial_phase_coefficients_rad is None
+        ):
             raise ValueError("Provide both initial amplitude and phase coefficients")
         if self.initial_amplitude_coefficients is not None:
             a = np.asarray(self.initial_amplitude_coefficients, dtype=float)
             p = np.asarray(self.initial_phase_coefficients_rad, dtype=float)
-            if a.shape != (self.coefficient_count,) or p.shape != a.shape or not np.all(np.isfinite(a)) or not np.all(np.isfinite(p)):
-                raise ValueError("Initial coefficient arrays must be finite and match coefficient_count")
+            if (
+                a.shape != (self.coefficient_count,)
+                or p.shape != a.shape
+                or not np.all(np.isfinite(a))
+                or not np.all(np.isfinite(p))
+            ):
+                raise ValueError(
+                    "Initial coefficient arrays must be finite and match coefficient_count"
+                )
             if np.min(a) < 0 or np.max(a) > self.maximum_amplitude_fraction:
-                raise ValueError("Initial coefficients exceed the configured amplitude limit")
+                raise ValueError(
+                    "Initial coefficients exceed the configured amplitude limit"
+                )
         self.robustness_config().validate()
 
     def robustness_config(self) -> RobustnessConfig:
@@ -186,7 +211,8 @@ class ClosedLoopResult:
     best_loss: float
     phase_reference: PhaseReference
     pulse_start_s: float
-    history: tuple[dict[str, float | int], ...]
+    history: tuple[dict[str, float | int | str], ...]
+    final_verification_loss: float
 
 
 def _json_ready(value: Any) -> Any:
@@ -295,12 +321,27 @@ def upload_tables_with_readback(
         raise RuntimeError("TNMR phase-table readback does not match the upload.")
 
 
+def wait_for_acquisition(tnmr, timeout_s, poll_s):
+    """Require software-reported completion before another command upload."""
+    deadline = time.monotonic() + timeout_s
+    while True:
+        state = tnmr.snapshot().get("acquisition_complete")
+        if state is True:
+            return
+        if state is not False:
+            raise RuntimeError("TNMR acquisition state unknown; refusing table changes")
+        if time.monotonic() >= deadline:
+            raise TimeoutError("TNMR acquisition did not complete before the timeout")
+        time.sleep(poll_s)
+
+
 def _capture_and_demodulate(
     scope: Any,
     tnmr: Any,
     config: ClosedLoopConfig,
     *,
     frozen_pulse_start_s: float | None,
+    raw_path: Path | None = None,
 ) -> tuple[CapturedControls, float]:
     raw = scope.capture_single_waveform(
         WaveformCaptureConfig(
@@ -316,6 +357,14 @@ def _capture_and_demodulate(
         confirm_armed=True,
         rearm_after_read=False,
     )
+    if raw_path is not None:
+        np.savez_compressed(
+            raw_path,
+            time_s=raw.time,
+            voltage_v=raw.voltage,
+            sample_rate_hz=raw.sample_rate,
+        )
+    wait_for_acquisition(tnmr, config.trigger_timeout_s, config.trigger_poll_s)
     demodulated = demodulate_raw_rf(
         raw,
         demodulation_freq_hz=config.demodulation_frequency_hz,
@@ -383,7 +432,9 @@ def _normalized_measured_controls(
     return normalized.real, normalized.imag, corrected_voltage
 
 
-def _history_row(epoch: int, evaluation: GrapeEvaluation) -> dict[str, float | int]:
+def _history_row(
+    epoch: int, evaluation: GrapeEvaluation | PulseEvaluation
+) -> dict[str, float | int]:
     objective = evaluation.objective
     return {
         "epoch": epoch,
@@ -392,9 +443,7 @@ def _history_row(epoch: int, evaluation: GrapeEvaluation) -> dict[str, float | i
         "cvar_fidelity": objective.cvar_fidelity,
         "worst_fidelity": objective.worst_fidelity,
         "center_fidelity": objective.center_fidelity,
-        "fraction_at_or_above_threshold": (
-            objective.fraction_at_or_above_threshold
-        ),
+        "fraction_at_or_above_threshold": (objective.fraction_at_or_above_threshold),
     }
 
 
@@ -409,15 +458,20 @@ def _write_history(path: Path, history: list[dict[str, float | int]]) -> None:
 
 def _plot_heatmap(
     path: Path,
-    evaluation: GrapeEvaluation,
+    evaluation: GrapeEvaluation | PulseEvaluation,
     config: ClosedLoopConfig,
     *,
     title: str,
 ) -> None:
+    """Plot fidelity on a fixed 0.99–1.00 scale, independent of the data minimum."""
     import matplotlib.pyplot as plt
 
     amplitude_axis = np.asarray(config.amplitude_errors, dtype=float)
-    detuning_axis = np.asarray(config.detuning_ratios, dtype=float) * config.omega_at_amplitude_100_rad_s / (2 * math.pi * 1000)
+    detuning_axis = (
+        np.asarray(config.detuning_ratios, dtype=float)
+        * config.omega_at_amplitude_100_rad_s
+        / (2 * math.pi * 1000)
+    )
     amplitude_extent = (
         (float(amplitude_axis[0] - 0.5), float(amplitude_axis[0] + 0.5))
         if len(amplitude_axis) == 1
@@ -437,7 +491,7 @@ def _plot_heatmap(
             *amplitude_extent,
             *detuning_extent,
         ),
-        vmin=min(0.99, float(np.min(evaluation.objective.fidelity))),
+        vmin=0.99,
         vmax=1.0,
         cmap="viridis",
     )
@@ -460,8 +514,8 @@ def _aligned_unwrapped_phase(
 
     phase = np.unwrap(np.angle(np.asarray(values, dtype=np.complex128)))
     reference = np.asarray(reference_phase_rad, dtype=float)
-    branch_shift = 2.0 * math.pi * round(
-        float(np.median(reference - phase)) / (2.0 * math.pi)
+    branch_shift = (
+        2.0 * math.pi * round(float(np.median(reference - phase)) / (2.0 * math.pi))
     )
     return phase + branch_shift
 
@@ -486,7 +540,9 @@ def _draw_bb1_boundaries(ax: Any, time_us: np.ndarray) -> None:
     start = float(time_us[0])
     duration = float(time_us[-1] - time_us[0])
     for fraction in (0.1, 0.3, 0.7, 0.9):
-        ax.axvline(start + fraction * duration, color="0.65", linestyle="--", linewidth=0.8)
+        ax.axvline(
+            start + fraction * duration, color="0.65", linestyle="--", linewidth=0.8
+        )
 
 
 def _save_stage1_diagnostics(
@@ -500,7 +556,7 @@ def _save_stage1_diagnostics(
     corrected_voltage: np.ndarray,
     normalized_i: np.ndarray,
     normalized_q: np.ndarray,
-    evaluation: GrapeEvaluation,
+    evaluation: GrapeEvaluation | PulseEvaluation,
     config: ClosedLoopConfig,
 ) -> None:
     """Save the standalone Stage-1 phase, final-pulse, heatmap, and summary graphs."""
@@ -701,7 +757,9 @@ def _save_stage1_diagnostics(
             "full_stage1_acceptance_requires_graph_review": True,
             "measured_phase_offset_rad": phase_reference.offset_rad,
             "measured_phase_offset_deg": math.degrees(phase_reference.offset_rad),
-            "applied_analysis_phase_change_deg": -math.degrees(phase_reference.offset_rad),
+            "applied_analysis_phase_change_deg": -math.degrees(
+                phase_reference.offset_rad
+            ),
             "first_last_disagreement_deg": math.degrees(
                 phase_reference.segment_disagreement_rad
             ),
@@ -749,13 +807,23 @@ def _save_candidate(
     corrected_voltage: np.ndarray,
     normalized_i: np.ndarray,
     normalized_q: np.ndarray,
-    evaluation: GrapeEvaluation,
+    evaluation: GrapeEvaluation | PulseEvaluation,
     config: ClosedLoopConfig,
+    amplitude_logits: np.ndarray | None = None,
+    plot: bool = True,
 ) -> None:
     np.savez_compressed(
         run_directory / f"{label}.npz",
         epoch=epoch,
         amplitude_coefficients=amplitude_coefficients,
+        amplitude_logits=amplitude_logits
+        if amplitude_logits is not None
+        else logits_from_amplitudes(
+            amplitude_coefficients, config.maximum_amplitude_fraction
+        ),
+        amplitude_parameterization="sigmoid",
+        amplitude_maximum=config.maximum_amplitude_fraction,
+        gradient_method="spsa",
         phase_coefficients_rad=phase_coefficients_rad,
         amplitude_percent=amplitude_percent,
         phase_degrees=phase_degrees,
@@ -768,10 +836,14 @@ def _save_candidate(
         normalized_q=normalized_q,
         amplitude_errors=config.amplitude_errors,
         detuning_ratios=config.detuning_ratios,
-        detuning_hz=np.asarray(config.detuning_ratios) * config.omega_at_amplitude_100_rad_s / (2 * math.pi),
+        detuning_hz=np.asarray(config.detuning_ratios)
+        * config.omega_at_amplitude_100_rad_s
+        / (2 * math.pi),
         fidelity=evaluation.objective.fidelity,
         loss=evaluation.objective.loss,
     )
+    if not plot:
+        return
     np.savetxt(
         run_directory / f"{label}_amplitude_percent.csv",
         amplitude_percent,
@@ -810,19 +882,28 @@ def _write_checkpoint(
     best_phase_coefficients_rad: np.ndarray,
     phase_reference: PhaseReference,
     pulse_start_s: float,
+    amplitude_logits: np.ndarray,
+    amplitude_maximum: float,
+    spsa_path: Path,
 ) -> None:
     np.savez_compressed(
         path,
         epoch=epoch,
         amplitude_coefficients=amplitude_coefficients,
+        amplitude_logits=amplitude_logits,
+        amplitude_maximum=amplitude_maximum,
+        amplitude_parameterization="sigmoid",
+        gradient_method="spsa",
+        center_is_measured=False,
+        last_spsa_path=str(spsa_path),
         phase_coefficients_rad=phase_coefficients_rad,
-        amplitude_adam_first=(
+        amplitude_logit_first=(
             np.asarray([]) if amplitude_adam is None else amplitude_adam.first_moment
         ),
-        amplitude_adam_second=(
+        amplitude_logit_second=(
             np.asarray([]) if amplitude_adam is None else amplitude_adam.second_moment
         ),
-        amplitude_adam_step=(0 if amplitude_adam is None else amplitude_adam.step),
+        amplitude_logit_step=(0 if amplitude_adam is None else amplitude_adam.step),
         phase_adam_first=(
             np.asarray([]) if phase_adam is None else phase_adam.first_moment
         ),
@@ -852,13 +933,7 @@ def run_closed_loop_optimizer(
     tnmr: Any | None = None,
     scope: Any | None = None,
 ) -> ClosedLoopResult:
-    """Run BB1 phase referencing, then measured-waveform GRAPE/Adam updates.
-
-    The GRAPE gradient is exact with respect to the captured I/Q waveform. Its
-    conversion into the next commanded amplitude/phase table deliberately uses
-    a straight-through (identity) hardware Jacobian. The next capture closes
-    that modeling gap before another update is accepted.
-    """
+    """Run BB1 phase referencing, then paired full-loss SPSA/Adam updates."""
 
     config.validate()
     run_directory = _create_run_directory(config.results_root)
@@ -877,7 +952,9 @@ def run_closed_loop_optimizer(
         degree=config.spline_degree,
     )
     if initialization.amplitude_fraction > config.maximum_amplitude_fraction + 1e-12:
-        raise ValueError("BB1 phase reference exceeds the configured amplitude limit; increase duration")
+        raise ValueError(
+            "BB1 phase reference exceeds the configured amplitude limit; increase duration"
+        )
     amplitude_coefficients = initialization.amplitude_coefficients.copy()
     phase_coefficients_rad = initialization.phase_coefficients_rad.copy()
     amplitude_percent, phase_degrees, command_phase_rad = command_tables(
@@ -899,7 +976,9 @@ def run_closed_loop_optimizer(
             )
             tnmr.open(config.tnt_path)
         if scope is None:
-            scope = RigolDHO(resource=config.visa_resource, timeout_ms=config.scope_timeout_ms)
+            scope = RigolDHO(
+                resource=config.visa_resource, timeout_ms=config.scope_timeout_ms
+            )
             scope.open()
 
         available_tables = set(tnmr.get_table_list())
@@ -911,6 +990,7 @@ def run_closed_loop_optimizer(
             )
         original_amplitude_table = tnmr.get_table(config.amplitude_table_name)
         original_phase_table = tnmr.get_table(config.phase_table_name)
+        wait_for_acquisition(tnmr, config.trigger_timeout_s, config.trigger_poll_s)
         upload_tables_with_readback(
             tnmr,
             amplitude_table_name=config.amplitude_table_name,
@@ -972,163 +1052,36 @@ def run_closed_loop_optimizer(
 
         # Verify the reference independently before switching to a requested seed.
         if config.initial_amplitude_coefficients is not None:
-            reference, _ = _capture_and_demodulate(scope, tnmr, config, frozen_pulse_start_s=frozen_pulse_start_s)
-            ref_i, ref_q, corrected = _normalized_measured_controls(reference, phase_reference, config)
-            ref_evaluation = robustness_grape_gradient(ref_i, ref_q, reference.entry_dt_s, config.robustness_config())
-            _save_stage1_diagnostics(run_directory, reference_captures=np.asarray(reference_captures), phase_reference=phase_reference, amplitude_percent=amplitude_percent, command_phase_unwrapped_rad=command_phase_rad, capture=reference, corrected_voltage=corrected, normalized_i=ref_i, normalized_q=ref_q, evaluation=ref_evaluation, config=config)
-            amplitude_coefficients = np.asarray(config.initial_amplitude_coefficients).copy()
-            phase_coefficients_rad = np.asarray(config.initial_phase_coefficients_rad).copy()
-            amplitude_percent, phase_degrees, command_phase_rad = command_tables(amplitude_coefficients, phase_coefficients_rad, spline)
-            upload_tables_with_readback(tnmr, amplitude_table_name=config.amplitude_table_name, phase_table_name=config.phase_table_name, amplitude_percent=amplitude_percent, phase_degrees=phase_degrees)
-
-        robustness_config = config.robustness_config()
-        history: list[dict[str, float | int]] = []
-        amplitude_adam: AdamState | None = None
-        phase_adam: AdamState | None = None
-        best_epoch = -1
-        best_loss = math.inf
-        best_amplitude_coefficients = amplitude_coefficients.copy()
-        best_phase_coefficients_rad = phase_coefficients_rad.copy()
-
-        for epoch in range(config.update_count + 1):
-            captured, measured_pulse_start_s = _capture_and_demodulate(
-                scope,
-                tnmr,
-                config,
-                frozen_pulse_start_s=frozen_pulse_start_s,
+            reference, _ = _capture_and_demodulate(
+                scope, tnmr, config, frozen_pulse_start_s=frozen_pulse_start_s
             )
-            if not math.isclose(
-                measured_pulse_start_s,
-                frozen_pulse_start_s,
-                rel_tol=0.0,
-                abs_tol=1e-15,
-            ):
-                raise RuntimeError("The frozen pulse start changed during optimization.")
-            normalized_i, normalized_q, corrected_voltage = (
-                _normalized_measured_controls(captured, phase_reference, config)
+            ref_i, ref_q, corrected = _normalized_measured_controls(
+                reference, phase_reference, config
             )
-            evaluation = robustness_grape_gradient(
-                normalized_i,
-                normalized_q,
-                captured.entry_dt_s,
-                robustness_config,
+            ref_evaluation = robustness_objective(
+                ref_i, ref_q, reference.entry_dt_s, config.robustness_config()
             )
-            history.append(_history_row(epoch, evaluation))
-            _write_history(run_directory / "history.csv", history)
-            print(
-                f"Epoch {epoch:04d}/{config.update_count:04d}: "
-                f"loss={evaluation.objective.loss:.12g}, "
-                f"center={evaluation.objective.center_fidelity:.9f}, "
-                f"mean={evaluation.objective.mean_fidelity:.9f}, "
-                f"worst={evaluation.objective.worst_fidelity:.9f}, "
-                f">={config.fidelity_threshold:.3f}="
-                f"{evaluation.objective.fraction_at_or_above_threshold:.3%}"
+            _save_stage1_diagnostics(
+                run_directory,
+                reference_captures=np.asarray(reference_captures),
+                phase_reference=phase_reference,
+                amplitude_percent=amplitude_percent,
+                command_phase_unwrapped_rad=command_phase_rad,
+                capture=reference,
+                corrected_voltage=corrected,
+                normalized_i=ref_i,
+                normalized_q=ref_q,
+                evaluation=ref_evaluation,
+                config=config,
             )
-
-            if epoch == 0:
-                _save_candidate(
-                    run_directory,
-                    "initial_measured",
-                    epoch=epoch,
-                    amplitude_coefficients=amplitude_coefficients,
-                    phase_coefficients_rad=phase_coefficients_rad,
-                    amplitude_percent=amplitude_percent,
-                    phase_degrees=phase_degrees,
-                    command_phase_unwrapped_rad=command_phase_rad,
-                    capture=captured,
-                    corrected_voltage=corrected_voltage,
-                    normalized_i=normalized_i,
-                    normalized_q=normalized_q,
-                    evaluation=evaluation,
-                    config=config,
-                )
-                if config.initial_amplitude_coefficients is None:
-                    _save_stage1_diagnostics(
-                        run_directory,
-                        reference_captures=np.asarray(reference_captures),
-                        phase_reference=phase_reference,
-                        amplitude_percent=amplitude_percent,
-                        command_phase_unwrapped_rad=command_phase_rad,
-                        capture=captured,
-                        corrected_voltage=corrected_voltage,
-                        normalized_i=normalized_i,
-                        normalized_q=normalized_q,
-                        evaluation=evaluation,
-                        config=config,
-                    )
-            if evaluation.objective.loss < best_loss:
-                best_epoch = epoch
-                best_loss = evaluation.objective.loss
-                best_amplitude_coefficients = amplitude_coefficients.copy()
-                best_phase_coefficients_rad = phase_coefficients_rad.copy()
-                _save_candidate(
-                    run_directory,
-                    "best_measured",
-                    epoch=epoch,
-                    amplitude_coefficients=amplitude_coefficients,
-                    phase_coefficients_rad=phase_coefficients_rad,
-                    amplitude_percent=amplitude_percent,
-                    phase_degrees=phase_degrees,
-                    command_phase_unwrapped_rad=command_phase_rad,
-                    capture=captured,
-                    corrected_voltage=corrected_voltage,
-                    normalized_i=normalized_i,
-                    normalized_q=normalized_q,
-                    evaluation=evaluation,
-                    config=config,
-                )
-            if epoch == config.update_count:
-                _save_candidate(
-                    run_directory,
-                    "final_measured",
-                    epoch=epoch,
-                    amplitude_coefficients=amplitude_coefficients,
-                    phase_coefficients_rad=phase_coefficients_rad,
-                    amplitude_percent=amplitude_percent,
-                    phase_degrees=phase_degrees,
-                    command_phase_unwrapped_rad=command_phase_rad,
-                    capture=captured,
-                    corrected_voltage=corrected_voltage,
-                    normalized_i=normalized_i,
-                    normalized_q=normalized_q,
-                    evaluation=evaluation,
-                    config=config,
-                )
-                break
-
-            amplitude_entry_gradient, phase_entry_gradient = polar_control_gradients(
-                normalized_i,
-                normalized_q,
-                evaluation.i_gradient,
-                evaluation.q_gradient,
-            )
-            amplitude_coefficient_gradient = np.asarray(
-                spline.T @ amplitude_entry_gradient,
-                dtype=float,
-            )
-            phase_coefficient_gradient = np.asarray(
-                spline.T @ phase_entry_gradient,
-                dtype=float,
-            )
-            amplitude_coefficients, amplitude_adam = adam_update(
-                amplitude_coefficients,
-                amplitude_coefficient_gradient,
-                amplitude_adam,
-                learning_rate=config.amplitude_learning_rate,
-                maximum_step=config.maximum_amplitude_coefficient_step,
-            )
-            phase_coefficients_rad, phase_adam = adam_update(
-                phase_coefficients_rad,
-                phase_coefficient_gradient,
-                phase_adam,
-                learning_rate=config.phase_learning_rate,
-                maximum_step=config.maximum_phase_coefficient_step_rad,
-            )
-            amplitude_coefficients = np.clip(amplitude_coefficients, 0.0, config.maximum_amplitude_fraction)
+            amplitude_coefficients = np.asarray(
+                config.initial_amplitude_coefficients
+            ).copy()
+            phase_coefficients_rad = np.asarray(
+                config.initial_phase_coefficients_rad
+            ).copy()
             amplitude_percent, phase_degrees, command_phase_rad = command_tables(
-                amplitude_coefficients,
-                phase_coefficients_rad,
-                spline,
+                amplitude_coefficients, phase_coefficients_rad, spline
             )
             upload_tables_with_readback(
                 tnmr,
@@ -1137,48 +1090,232 @@ def run_closed_loop_optimizer(
                 amplitude_percent=amplitude_percent,
                 phase_degrees=phase_degrees,
             )
+
+        robustness_config = config.robustness_config()
+        amplitude_logits = logits_from_amplitudes(
+            amplitude_coefficients, config.maximum_amplitude_fraction
+        )
+        amplitude_coefficients, _ = sigmoid_amplitude(
+            amplitude_logits, config.maximum_amplitude_fraction
+        )
+        history = []
+        amplitude_adam = phase_adam = None
+        best = None
+        best_epoch = 0
+        count = config.coefficient_count
+
+        def measure(parameters, label):
+            candidate_logits, candidate_phase = np.split(parameters, 2)
+            candidate_amplitude, _ = sigmoid_amplitude(
+                candidate_logits, config.maximum_amplitude_fraction
+            )
+            percent, degrees, command_phase = command_tables(
+                candidate_amplitude, candidate_phase, spline
+            )
+            wait_for_acquisition(tnmr, config.trigger_timeout_s, config.trigger_poll_s)
+            upload_tables_with_readback(
+                tnmr,
+                amplitude_table_name=config.amplitude_table_name,
+                phase_table_name=config.phase_table_name,
+                amplitude_percent=percent,
+                phase_degrees=degrees,
+            )
+            captured, measured_start = _capture_and_demodulate(
+                scope,
+                tnmr,
+                config,
+                frozen_pulse_start_s=frozen_pulse_start_s,
+                raw_path=run_directory / f"{label}_raw.npz",
+            )
+            if not math.isclose(
+                measured_start, frozen_pulse_start_s, rel_tol=0, abs_tol=1e-15
+            ):
+                raise RuntimeError(
+                    "The frozen pulse start changed during optimization."
+                )
+            i_values, q_values, corrected = _normalized_measured_controls(
+                captured, phase_reference, config
+            )
+            evaluation = robustness_objective(
+                i_values, q_values, captured.entry_dt_s, robustness_config
+            )
+            if not math.isfinite(evaluation.objective.loss):
+                raise ValueError("Measured loss is not finite")
+            return {
+                "parameters": parameters.copy(),
+                "label": label,
+                "amplitude_coefficients": candidate_amplitude,
+                "phase_coefficients_rad": candidate_phase.copy(),
+                "amplitude_logits": candidate_logits.copy(),
+                "amplitude_percent": percent,
+                "phase_degrees": degrees,
+                "command_phase_unwrapped_rad": command_phase,
+                "capture": captured,
+                "corrected_voltage": corrected,
+                "normalized_i": i_values,
+                "normalized_q": q_values,
+                "evaluation": evaluation,
+            }
+
+        def save(candidate, label, epoch, *, plot=True):
+            _save_candidate(
+                run_directory,
+                label,
+                epoch=epoch,
+                config=config,
+                plot=plot,
+                **{
+                    key: value
+                    for key, value in candidate.items()
+                    if key not in {"parameters", "label"}
+                },
+            )
+
+        def record(candidate, epoch, kind, estimate=None):
+            nonlocal best, best_epoch
+            evaluation = candidate["evaluation"]
+            history.append(
+                {
+                    **_history_row(epoch, evaluation),
+                    "kind": kind,
+                    "measurement_path": str(
+                        run_directory / (candidate["label"] + ".npz")
+                    ),
+                    "spsa_plus_loss_mean": float(np.mean(estimate.plus_losses))
+                    if estimate
+                    else math.nan,
+                    "spsa_minus_loss_mean": float(np.mean(estimate.minus_losses))
+                    if estimate
+                    else math.nan,
+                    "spsa_capture_order": ";".join(estimate.capture_order)
+                    if estimate
+                    else "",
+                }
+            )
+            _write_history(run_directory / "history.csv", history)
+            print(f"Epoch {epoch:04d} ({kind}): loss={evaluation.objective.loss:.12g}")
+            if kind != "final_verification" and (
+                best is None
+                or evaluation.objective.loss < best["evaluation"].objective.loss
+            ):
+                best, best_epoch = candidate, epoch
+                save(candidate, "best_measured", epoch)
+
+        initial = measure(
+            np.r_[amplitude_logits, phase_coefficients_rad], "initial_measured"
+        )
+        save(initial, "initial_measured", 0)
+        record(initial, 0, "initial")
+        if config.initial_amplitude_coefficients is None:
+            _save_stage1_diagnostics(
+                run_directory,
+                reference_captures=np.asarray(reference_captures),
+                phase_reference=phase_reference,
+                amplitude_percent=initial["amplitude_percent"],
+                command_phase_unwrapped_rad=initial["command_phase_unwrapped_rad"],
+                capture=initial["capture"],
+                corrected_voltage=initial["corrected_voltage"],
+                normalized_i=initial["normalized_i"],
+                normalized_q=initial["normalized_q"],
+                evaluation=initial["evaluation"],
+                config=config,
+            )
+
+        for epoch in range(1, config.update_count + 1):
+            selected = None
+
+            def probe(parameters, direction, member, *, epoch=epoch):
+                nonlocal selected
+                label = f"epoch_{epoch:04d}_direction_{direction:03d}_{member}"
+                candidate = measure(parameters, label)
+                save(candidate, label, epoch, plot=False)
+                if (
+                    selected is None
+                    or candidate["evaluation"].objective.loss
+                    < selected["evaluation"].objective.loss
+                ):
+                    selected = candidate
+                return candidate["evaluation"].objective.loss
+
+            estimate = estimate_spsa(
+                np.r_[amplitude_logits, phase_coefficients_rad],
+                probe,
+                config=config.spsa,
+                epoch=epoch - 1,
+            )
+            spsa_path = run_directory / f"epoch_{epoch:04d}_spsa.npz"
+            np.savez_compressed(
+                spsa_path,
+                **asdict(estimate),
+                center_parameters=np.r_[amplitude_logits, phase_coefficients_rad],
+            )
+            record(selected, epoch, "spsa", estimate)
+            amplitude_logits, amplitude_adam = adam_update(
+                amplitude_logits,
+                estimate.gradient[:count],
+                amplitude_adam,
+                learning_rate=config.amplitude_logit_learning_rate,
+                maximum_step=config.maximum_amplitude_logit_step,
+            )
+            phase_coefficients_rad, phase_adam = adam_update(
+                phase_coefficients_rad,
+                estimate.gradient[count:],
+                phase_adam,
+                learning_rate=config.phase_learning_rate,
+                maximum_step=config.maximum_phase_coefficient_step_rad,
+            )
+            amplitude_coefficients, _ = sigmoid_amplitude(
+                amplitude_logits, config.maximum_amplitude_fraction
+            )
             _write_checkpoint(
                 run_directory / "checkpoint_latest.npz",
                 epoch=epoch + 1,
                 amplitude_coefficients=amplitude_coefficients,
+                amplitude_logits=amplitude_logits,
+                amplitude_maximum=config.maximum_amplitude_fraction,
                 phase_coefficients_rad=phase_coefficients_rad,
                 amplitude_adam=amplitude_adam,
                 phase_adam=phase_adam,
                 best_epoch=best_epoch,
-                best_loss=best_loss,
-                best_amplitude_coefficients=best_amplitude_coefficients,
-                best_phase_coefficients_rad=best_phase_coefficients_rad,
+                best_loss=best["evaluation"].objective.loss,
+                best_amplitude_coefficients=best["amplitude_coefficients"],
+                best_phase_coefficients_rad=best["phase_coefficients_rad"],
                 phase_reference=phase_reference,
                 pulse_start_s=frozen_pulse_start_s,
+                spsa_path=spsa_path,
             )
 
-        best_amplitude_percent, best_phase_degrees, _ = command_tables(
-            best_amplitude_coefficients,
-            best_phase_coefficients_rad,
-            spline,
+        # No extra acquisition for the reference-only (zero-update) workflow.
+        final = (
+            measure(best["parameters"], "final_measured")
+            if config.update_count
+            else initial
         )
-        upload_tables_with_readback(
-            tnmr,
-            amplitude_table_name=config.amplitude_table_name,
-            phase_table_name=config.phase_table_name,
-            amplitude_percent=best_amplitude_percent,
-            phase_degrees=best_phase_degrees,
-        )
+        save(final, "final_measured", config.update_count + 1)
+        if config.update_count:
+            record(final, config.update_count + 1, "final_verification")
+        best_loss = best["evaluation"].objective.loss
         _write_json(
             run_directory / "summary.json",
             {
                 "best_epoch": best_epoch,
                 "best_loss": best_loss,
+                "best_measurement_path": str(run_directory / "best_measured.npz"),
+                "final_verification_loss": final["evaluation"].objective.loss,
+                "final_verification_path": str(run_directory / "final_measured.npz"),
+                "final_verification_independent": bool(config.update_count),
                 "phase_reference": asdict(phase_reference),
                 "pulse_start_s": frozen_pulse_start_s,
                 "restored_tnmr_tables": "best measured candidate",
-                "gradient_hardware_jacobian": "straight-through identity",
+                "gradient_method": "spsa",
+                "gradient_hardware_jacobian": "included through paired full-loss measurements",
+                "amplitude_parameterization": "sigmoid",
+                "spsa": asdict(config.spsa),
+                "candidate_evaluations": 1
+                + 2 * config.spsa.directions * config.update_count
+                + bool(config.update_count),
                 "target": "fixed ideal X(pi)",
             },
-        )
-        print(
-            f"Restored best measured candidate from epoch {best_epoch} "
-            f"(loss {best_loss:.12g}) to TNMR."
         )
         completed = True
         return ClosedLoopResult(
@@ -1188,6 +1325,7 @@ def run_closed_loop_optimizer(
             phase_reference=phase_reference,
             pulse_start_s=frozen_pulse_start_s,
             history=tuple(history),
+            final_verification_loss=final["evaluation"].objective.loss,
         )
     finally:
         if not completed and original_amplitude_table is not None:

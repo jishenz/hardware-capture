@@ -75,7 +75,7 @@ def analyze(config: Experiment, directory: Path, *, scope=None) -> dict:
     np.savez_compressed(directory / "analysis.npz", **{k: result[k] for k in ["amplitude_errors", "detuning_hz", "fidelity"]}, time_s=pulse.time_mid, omega_x_rad_s=pulse.omega_x, omega_y_rad_s=pulse.omega_y)
     import matplotlib.pyplot as plt
     fig, ax = subplots(show=config.section("output").get("show_plots", False))
-    mesh = ax.pcolormesh(result["amplitude_errors"], result["detuning_hz"] / 1000, result["fidelity"], shading="nearest", vmin=0, vmax=1)
+    mesh = ax.pcolormesh(result["amplitude_errors"], result["detuning_hz"] / 1000, result["fidelity"], shading="nearest", vmin=0.99, vmax=1.0)
     ax.set(xlabel="Fractional amplitude error", ylabel="Detuning (kHz)", title=f"Target: {result['target']}")
     fig.colorbar(mesh, ax=ax, label="Process fidelity")
     fig.tight_layout(); fig.savefig(directory / "heatmap.png", dpi=150)

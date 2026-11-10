@@ -10,7 +10,6 @@ from scipy import sparse
 from scipy.interpolate import BSpline
 from scipy.special import expit
 
-
 I2 = np.eye(2, dtype=np.complex128)
 SIGMA_X = np.array([[0.0, 1.0], [1.0, 0.0]], dtype=np.complex128)
 SIGMA_Y = np.array([[0.0, -1.0j], [1.0j, 0.0]], dtype=np.complex128)
@@ -56,7 +55,10 @@ class RobustnessConfig:
     cvar_confidence: float = 0.95
 
     def validate(self) -> None:
-        if not math.isfinite(self.omega_reference_rad_s) or self.omega_reference_rad_s <= 0:
+        if (
+            not math.isfinite(self.omega_reference_rad_s)
+            or self.omega_reference_rad_s <= 0
+        ):
             raise ValueError("omega_reference_rad_s must be finite and positive.")
         if np.asarray(self.amplitude_errors).size < 1:
             raise ValueError("amplitude_errors must not be empty.")
@@ -91,6 +93,14 @@ class ObjectiveEvaluation:
     center_fidelity: float
     fraction_at_or_above_threshold: float
     scenario_weights: np.ndarray
+
+
+@dataclass(frozen=True)
+class PulseEvaluation:
+    """Forward-only objective and target; no waveform derivatives."""
+
+    objective: ObjectiveEvaluation
+    target_unitary: np.ndarray
 
 
 @dataclass(frozen=True)
@@ -175,8 +185,8 @@ def bb1_initialization(
         raise ValueError("pulse_duration_s must be positive.")
     if omega_at_amplitude_100_rad_s <= 0.0:
         raise ValueError("omega_at_amplitude_100_rad_s must be positive.")
-    amplitude_fraction = 5.0 * math.pi / (
-        pulse_duration_s * omega_at_amplitude_100_rad_s
+    amplitude_fraction = (
+        5.0 * math.pi / (pulse_duration_s * omega_at_amplitude_100_rad_s)
     )
     if amplitude_fraction > 1.0 + 1e-12:
         raise ValueError(
@@ -259,7 +269,9 @@ def _segment_offset(
     threshold = minimum_amplitude_fraction * float(np.max(np.abs(values)))
     reliable = amplitude >= threshold
     if np.count_nonzero(reliable) < 3:
-        raise ValueError("A BB1 reference segment has fewer than three reliable points.")
+        raise ValueError(
+            "A BB1 reference segment has fewer than three reliable points."
+        )
     observed = float(np.angle(np.sum(segment[reliable])))
     return float(np.angle(np.exp(1.0j * (observed - expected_phase_rad))))
 
@@ -358,7 +370,10 @@ def estimate_phase_reference(
         ]
     )
     segment_residuals = np.asarray(
-        [_circular_distance(segment_offset, offset) for segment_offset in segment_offsets]
+        [
+            _circular_distance(segment_offset, offset)
+            for segment_offset in segment_offsets
+        ]
     )
     if np.max(segment_residuals) > maximum_bb1_pattern_residual_rad:
         raise ValueError(
@@ -381,7 +396,9 @@ def estimate_phase_reference(
 def apply_phase_reference(values: np.ndarray, reference: PhaseReference) -> np.ndarray:
     """Rotate captured I/Q into the frozen BB1 analysis frame."""
 
-    return np.asarray(values, dtype=np.complex128) * np.exp(-1.0j * reference.offset_rad)
+    return np.asarray(values, dtype=np.complex128) * np.exp(
+        -1.0j * reference.offset_rad
+    )
 
 
 def x_pi_target() -> np.ndarray:
@@ -412,15 +429,11 @@ def _step_and_control_derivatives(
     small = np.abs(half_angle) < 1e-4
     s = magnitude_squared[small]
     derivative_k_s[small] = (
-        -(dt_s**3) / 48.0
-        + (dt_s**5) * s / 1920.0
-        - (dt_s**7) * s**2 / 215040.0
+        -(dt_s**3) / 48.0 + (dt_s**5) * s / 1920.0 - (dt_s**7) * s**2 / 215040.0
     )
     r = magnitude[~small]
     a = half_angle[~small]
-    derivative_k_s[~small] = (
-        0.5 * dt_s * r * np.cos(a) - np.sin(a)
-    ) / (2.0 * r**3)
+    derivative_k_s[~small] = (0.5 * dt_s * r * np.cos(a) - np.sin(a)) / (2.0 * r**3)
     derivative_cosine_s = -0.25 * dt_s * sin_over_magnitude
 
     h_dot_sigma = np.empty((len(amplitude_scale), 2, 2), dtype=np.complex128)
@@ -428,27 +441,22 @@ def _step_and_control_derivatives(
     h_dot_sigma[:, 0, 1] = omega_x - 1.0j * omega_y
     h_dot_sigma[:, 1, 0] = omega_x + 1.0j * omega_y
     h_dot_sigma[:, 1, 1] = -delta
-    step = cosine[:, None, None] * I2 - 1.0j * sin_over_magnitude[:, None, None] * h_dot_sigma
+    step = (
+        cosine[:, None, None] * I2
+        - 1.0j * sin_over_magnitude[:, None, None] * h_dot_sigma
+    )
 
     derivative_cosine_x = 2.0 * omega_x * derivative_cosine_s
     derivative_cosine_y = 2.0 * omega_y * derivative_cosine_s
     derivative_k_x = 2.0 * omega_x * derivative_k_s
     derivative_k_y = 2.0 * omega_y * derivative_k_s
-    derivative_x = (
-        derivative_cosine_x[:, None, None] * I2
-        - 1.0j
-        * (
-            derivative_k_x[:, None, None] * h_dot_sigma
-            + sin_over_magnitude[:, None, None] * SIGMA_X
-        )
+    derivative_x = derivative_cosine_x[:, None, None] * I2 - 1.0j * (
+        derivative_k_x[:, None, None] * h_dot_sigma
+        + sin_over_magnitude[:, None, None] * SIGMA_X
     )
-    derivative_y = (
-        derivative_cosine_y[:, None, None] * I2
-        - 1.0j
-        * (
-            derivative_k_y[:, None, None] * h_dot_sigma
-            + sin_over_magnitude[:, None, None] * SIGMA_Y
-        )
+    derivative_y = derivative_cosine_y[:, None, None] * I2 - 1.0j * (
+        derivative_k_y[:, None, None] * h_dot_sigma
+        + sin_over_magnitude[:, None, None] * SIGMA_Y
     )
     derivative_x *= drive_derivative_scale[:, None, None]
     derivative_y *= drive_derivative_scale[:, None, None]
@@ -506,6 +514,63 @@ def robustness_grape_gradient(
 ) -> GrapeEvaluation:
     """Evaluate a fixed X(pi) objective and its exact per-entry GRAPE gradient."""
 
+    return _robustness_evaluation(
+        normalized_i, normalized_q, dt_s, config, gradients=True
+    )
+
+
+def robustness_objective(
+    normalized_i: np.ndarray,
+    normalized_q: np.ndarray,
+    dt_s: np.ndarray,
+    config: RobustnessConfig,
+) -> PulseEvaluation:
+    """Evaluate the identical full objective without a GRAPE backward pass."""
+
+    return _robustness_evaluation(
+        normalized_i, normalized_q, dt_s, config, gradients=False
+    )
+
+
+def _forward_unitary(i_values, q_values, durations, amplitude_scale, detuning, omega):
+    """Batched exact spin steps and ordered tree products, without derivatives.
+
+    Time ordering is preserved: later steps multiply on the left. Bounded
+    time/scenario blocks avoid materializing the full trajectory or gradient.
+    """
+    scenario_count = len(amplitude_scale)
+    result = np.empty((scenario_count, 2, 2), dtype=np.complex128)
+    for scenario in range(0, scenario_count, 512):
+        scale = omega * amplitude_scale[scenario : scenario + 512]
+        delta = omega * detuning[scenario : scenario + 512]
+        accumulated = np.broadcast_to(I2, (len(scale), 2, 2)).copy()
+        for start in range(0, len(i_values), 256):
+            stop = start + 256
+            x = i_values[start:stop, None] * scale
+            y = q_values[start:stop, None] * scale
+            dt = durations[start:stop, None]
+            angle = 0.5 * dt * np.sqrt(x**2 + y**2 + delta**2)
+            cosine = np.cos(angle)
+            sine_scale = 0.5 * dt * np.sinc(angle / math.pi)
+            steps = np.empty((*angle.shape, 2, 2), dtype=np.complex128)
+            steps[..., 0, 0] = cosine - 1j * sine_scale * delta
+            steps[..., 1, 1] = cosine + 1j * sine_scale * delta
+            steps[..., 0, 1] = -1j * sine_scale * (x - 1j * y)
+            steps[..., 1, 0] = -1j * sine_scale * (x + 1j * y)
+            while len(steps) > 1:
+                paired = len(steps) // 2 * 2
+                product = steps[1:paired:2] @ steps[:paired:2]
+                steps = (
+                    np.concatenate((product, steps[-1:]), axis=0)
+                    if len(steps) % 2 else product
+                )
+            accumulated = steps[0] @ accumulated
+        result[scenario : scenario + len(scale)] = accumulated
+    return result
+
+
+def _robustness_evaluation(normalized_i, normalized_q, dt_s, config, *, gradients):
+
     config.validate()
     i_values = np.asarray(normalized_i, dtype=float).reshape(-1)
     q_values = np.asarray(normalized_q, dtype=float).reshape(-1)
@@ -525,9 +590,21 @@ def robustness_grape_gradient(
     if np.any(amplitude_scale < 0.0):
         raise ValueError("Amplitude errors must not make the drive scale negative.")
 
+    if not gradients:
+        final = _forward_unitary(
+            i_values, q_values, durations, amplitude_scale, det_flat,
+            config.omega_reference_rad_s,
+        )
+        target = x_pi_target()
+        overlap = np.einsum("ij,gji->g", target.conj().T, final)
+        return PulseEvaluation(
+            objective=_objective_from_fidelities(np.abs(overlap) ** 2 / 4.0, config),
+            target_unitary=target,
+        )
+
     scenario_count = len(amp_flat)
     forward = np.empty(
-        (len(i_values) + 1, scenario_count, 2, 2),
+        (len(i_values) + 1 if gradients else 1, scenario_count, 2, 2),
         dtype=np.complex128,
     )
     forward[0] = I2
@@ -542,10 +619,10 @@ def robustness_grape_gradient(
             float(duration),
             config.omega_reference_rad_s,
         )
-        forward[index + 1] = np.einsum(
+        forward[index + 1 if gradients else 0] = np.einsum(
             "gij,gjk->gik",
             step,
-            forward[index],
+            forward[index if gradients else 0],
         )
 
     target = x_pi_target()
@@ -620,9 +697,7 @@ def polar_control_gradients(
     q_values = np.asarray(normalized_q, dtype=float)
     gradient_i = np.asarray(i_gradient, dtype=float)
     gradient_q = np.asarray(q_gradient, dtype=float)
-    if not (
-        i_values.shape == q_values.shape == gradient_i.shape == gradient_q.shape
-    ):
+    if not (i_values.shape == q_values.shape == gradient_i.shape == gradient_q.shape):
         raise ValueError("I/Q controls and gradients must have matching shapes.")
     amplitude = np.hypot(i_values, q_values)
     phase = np.arctan2(q_values, i_values)

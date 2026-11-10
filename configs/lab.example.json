@@ -28,8 +28,11 @@
     "launch": false
   },
   "optimization": {
-    "coefficients": 150,
+    "coefficients": 1500,
     "updates": 10,
     "phase_reference_captures": 5
+  },
+  "pulse": {
+    "samples": 6000
   }
 }

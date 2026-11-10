@@ -16,11 +16,53 @@ from hardware_capture.optimization.core import (
     estimate_phase_reference,
     polar_control_gradients,
     robustness_grape_gradient,
+    robustness_objective,
     x_pi_target,
 )
 
-
 pytestmark = pytest.mark.unit
+
+
+@pytest.mark.parametrize(
+    "entries,scenarios", [(1, 3), (7, 3), (256, 3), (257, 515), (6000, 3)]
+)
+def test_batched_propagation_preserves_order_and_block_boundaries(entries, scenarios):
+    from hardware_capture.optimization.core import (
+        _forward_unitary,
+        _step_and_control_derivatives,
+    )
+
+    rng = np.random.default_rng(63)
+    i, q = rng.uniform(-0.8, 0.8, (2, entries))
+    durations = rng.uniform(1e-9, 2e-6, entries)
+    scale = np.linspace(0, 1.5, scenarios)
+    detuning = np.linspace(0, 0.5, scenarios)
+    omega = 2 * math.pi * 160000
+    expected = np.broadcast_to(np.eye(2), (scenarios, 2, 2)).astype(complex).copy()
+    for iv, qv, dt in zip(i, q, durations):
+        step, _, _ = _step_and_control_derivatives(iv, qv, scale, detuning, dt, omega)
+        expected = np.einsum("gij,gjk->gik", step, expected)
+    actual = _forward_unitary(i, q, durations, scale, detuning, omega)
+    np.testing.assert_allclose(actual, expected, rtol=0, atol=2e-12)
+
+
+def test_forward_only_objective_matches_complete_grape_loss():
+    rng = np.random.default_rng(14)
+    i, q = rng.normal(0, 0.2, size=(2, 30))
+    durations = np.full(30, 1e-6)
+    config = RobustnessConfig(
+        omega_reference_rad_s=2 * math.pi * 160000,
+        amplitude_errors=np.array([-0.2, 0, 0.2]),
+        detuning_ratios=np.array([-0.1, 0, 0.1]),
+    )
+    analytical = robustness_grape_gradient(i, q, durations, config)
+    forward = robustness_objective(i, q, durations, config)
+    assert forward.objective.loss == pytest.approx(analytical.objective.loss, abs=1e-15)
+    assert forward.objective.fidelity == pytest.approx(
+        analytical.objective.fidelity, abs=1e-15
+    )
+    assert not hasattr(forward, "i_gradient")
+    assert not hasattr(forward, "q_gradient")
 
 
 def test_spline_is_partition_of_unity_and_has_requested_shape() -> None:
@@ -75,7 +117,9 @@ def _bb1_capture(entry_count: int, offset_rad: float) -> np.ndarray:
     return np.exp(1.0j * (phases + offset_rad))
 
 
-def test_phase_reference_uses_bb1_first_and_last_segments_without_table_change() -> None:
+def test_phase_reference_uses_bb1_first_and_last_segments_without_table_change() -> (
+    None
+):
     offsets = np.asarray([0.397, 0.401, 0.402, 0.400])
     captures = np.asarray([_bb1_capture(600, offset) for offset in offsets])
 

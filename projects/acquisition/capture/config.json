@@ -1,5 +1,5 @@
 {
-  "extends": "../../../configs/lab.example.json",
+  "extends": "../../../configs/lab.local.json",
   "input": {
     "kind": "scope",
     "shots": 1,

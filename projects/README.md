@@ -30,3 +30,4 @@ Every directory below has an English input/output/assumption contract, a config 
 | [Simulated X(pi) optimization](optimization/offline/README.md) | `optimize-offline` | Offline preset |
 | [Phase-Reference X(pi) workflow](optimization/phase-reference/README.md) | `phase-reference` | Live preview by default |
 | [Live X(pi) workflow](optimization/live/README.md) | `optimize-live` | Live preview by default |
+| [Repeated square/target optimizer](optimization/composite/README.md) | `optimize-composite` | Local lab profile; preview by default |

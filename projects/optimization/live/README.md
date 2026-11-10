@@ -10,7 +10,32 @@ The project config extends `configs/lab.example.json`. Paths resolve relative to
 
 ## Output
 
-Reference diagnostics and captures; live mode also produces history, checkpoints and measured heatmaps. Each run also records `resolved_config.json` and `result.json` in a new timestamped output folder.
+Reference diagnostics and captures; live mode also produces history, checkpoints, measured heatmaps, raw/processed +/- probes, and `epoch_NNNN_spsa.npz` gradient evidence. Each run also records `resolved_config.json` and `result.json` in a new timestamped output folder.
+
+## Optimization
+
+The hardware profile uses 1500 amplitude logits and 1500 phase coefficients,
+expanded to 6000 table entries per family. At 60 us the nominal dwell is 10 ns.
+
+After BB1 phase referencing, the optimizer measures the requested initial seed.
+Each update perturbs amplitude logits and phase coefficients simultaneously,
+evaluates the complete scalar robustness loss on both measured waveforms, and
+passes their SPSA gradient to Adam. There is no GRAPE backward pass or identity
+hardware-response approximation in this workflow. The loss and robustness
+weights remain unchanged.
+
+The `spsa` section defaults to one direction, seed 20260820, amplitude-logit
+perturbation 0.08, phase perturbation 0.05 rad, and decay 0.101. Capture order
+alternates. Both amplitude probe commands use `a_max * sigmoid(z)`. Configure
+`optimization.amplitude_logit_learning_rate` and `amplitude_logit_step` (default
+0.02 each); old amplitude-space rate/step keys are rejected to avoid silently
+changing units. Phase settings keep their existing units.
+
+The best actual initial/probe candidate is restored and independently measured
+at completion. The updated Adam center is explicitly marked unmeasured in its
+checkpoint. Each update costs two candidate captures per direction; initial and
+final measurements and phase-reference captures are additional. A failed probe
+cannot advance Adam or its checkpoint. Automatic resume is not implemented.
 
 ## Assumptions
 

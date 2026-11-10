@@ -94,15 +94,107 @@ Scan axes can be explicit arrays (`scan.amplitude_errors`, `detuning_hz`) or min
 
 ## Optimization
 
-`optimization.coefficients` is the cubic spline coefficient count (4 <= coefficients <= samples). `updates` is the number of updates after evaluating the initial candidate. Amplitude learning rate and maximum `amplitude_step` are in normalized amplitude-100 coefficient units; phase learning rate and `phase_step_rad` are in radians. The corresponding keys are `amplitude_learning_rate`, `phase_learning_rate`, `amplitude_step`, `phase_step_rad`.
+`optimization.coefficients` is the cubic spline coefficient count (4 <= coefficients <= samples). `updates` is the number of updates after evaluating the initial candidate. The offline optimizer uses `amplitude_learning_rate` and `amplitude_step` in normalized amplitude-100 units. Hardware `optimize-live` uses `amplitude_logit_learning_rate` and `amplitude_logit_step` (both default 0.02) in unrestricted logit units, and rejects the old amplitude-space keys. The composite workflow retains its `composite` logit settings described below. Phase settings remain `phase_learning_rate` and `phase_step_rad` in radians.
 
-Objective controls are `fidelity_threshold`, `threshold_smoothing`, `mean_weight`, `threshold_weight`, `cvar_weight`, `cvar_confidence`. The nonnegative mean/threshold/CVaR weights must sum to one. The loss combines mean infidelity, a smoothed threshold penalty and worst-tail CVaR. The target is fixed X(pi). Amplitude coefficients are clipped to the configured physical ceiling.
+Objective controls are `fidelity_threshold`, `threshold_smoothing`, `mean_weight`, `threshold_weight`, `cvar_weight`, `cvar_confidence`. The nonnegative mean/threshold/CVaR weights must sum to one. The loss combines mean infidelity, a smoothed threshold penalty and worst-tail CVaR. The target is fixed X(pi). The offline optimizer clips amplitude coefficients. Both hardware optimizers use `a_max * sigmoid(z)` and update unrestricted logits without post-update amplitude clipping. Seeds at an endpoint move inward by a fraction of `1e-6` to obtain finite logits.
 
-Offline `simulation.amplitude_scale` (default 1) and `phase_ripple_rad` (default 0) describe an illustrative response. Both offline/live loops retain the identity-response approximation for converting measured-control gradients into command updates. The measured Hamiltonian gradient remains GRAPE; this approximation is not a calibrated hardware transfer function.
+Offline `simulation.amplitude_scale` (default 1) and `phase_ripple_rad` (default 0) describe an illustrative response. The offline loop retains its GRAPE/identity-response approximation. Both hardware loops use total-loss SPSA: evaluate the complete scalar objective independently after each perturbed command passes through acquisition and calibration, then estimate the command gradient from the difference of those losses. No GRAPE backward pass or additional sigmoid/spline Jacobian enters the hardware update.
+
+The shared `spsa` section controls hardware perturbations:
+
+| Field | Default | Meaning |
+|---|---|---|
+| `directions` | 1 | Independent +/- pairs averaged per Adam update |
+| `seed` | 20260820 | Nonnegative integer for reproducible directions |
+| `amplitude_logit_perturbation` | 0.08 | Initial displacement of amplitude logits |
+| `phase_perturbation_rad` | 0.05 | Initial displacement of phase coefficients in radians |
+| `perturbation_decay` | 0.101 | Scales decay as `(update_index + 1)^(-decay)`, with decay in [0, 1] |
+
+Both parameter families move simultaneously with independent +/-1 signs. Each
+pair shares one unchanged center. The gradient is `(loss_plus-loss_minus) /
+(2 * scale * sign)` per parameter, averaged across directions before Adam.
+Probe order alternates across updates/directions. Probe sizes are distinct from
+Adam learning rates and maximum update steps. Hardware performance and suitable
+perturbation sizes still require experimental validation.
+
+A run measures the initial seed, uses `2 * directions` candidate evaluations
+per update, then restores and independently measures the best actual candidate
+(initial or perturbed). The final Adam center is saved as unmeasured; it is
+never reported as a measured best pulse. The reference-only/zero-update live
+workflow reuses its initial measurement instead of taking a final extra one.
+Composite always takes an independent final measurement. Each composite
+candidate record contains all N square/target pairs, freshly calibrated before
+complex averaging. For 10 updates and one direction, composite takes 22 records.
+Original live phase-reference captures are additional to these candidate counts.
+Dry-run plans report effective settings and candidate counts without connecting.
+
+Each successful update saves `epoch_NNNN_spsa.npz` with the center, both probe
+parameter vectors, signs, scales, losses, capture order, and full gradient.
+Every probe has its own raw and processed NPZ. History rows identify the selected
+measured candidate and mean +/- losses; detailed per-direction losses remain in
+the SPSA archive. Failed pairs do not advance Adam or its checkpoint. Checkpoints
+save the next center and logit-space Adam moments; automatic resume remains
+unsupported. Old amplitude-space checkpoints are not interchangeable.
 
 Live `phase_reference_captures` must be >= 2. A BB1 reference is measured before the requested seed, so duration/limit must permit 5*pi area even if the desired seed is shorter-area square. `use_configured_seed=true` uses shared pulse conditions; false starts from the internal BB1 reference. TNMR working sequence duration, selected tables and sample counts must match the config. The optimizer changes table values, not TPS timing or attenuator settings. Reference diagnostics still need experimental review. Checkpoints retain numerical state for inspection; automatic resume is not implemented.
 
 ## Sequence and TNMR settings
+
+### Repeated square/target optimization
+
+`optimize-composite` uses the separate `composite` section. See its
+[input, reduction and output contract](../projects/optimization/composite/README.md).
+It reads one scope record containing all repetitions, calibrates each target
+against its preceding square, then averages complex targets before each full-loss SPSA evaluation and Adam update.
+
+| Field | Meaning |
+|---|---|
+| `composite.sequence_path` | Optional exported TPS or supported TNT for offline schedule extraction; defaults to `tnmr.path` |
+| `parameter_source` | Literal parser field: `value` (default) or `current_value`; these names do not establish TNMR runtime semantics; repetitions come from the script loop |
+| `parameter_overrides` | Explicit required values for existing script parameters; cannot override the repetition count; never writes TNMR parameters |
+| `seed` | `existing_tables` (default), fitted to splines, or `configured` using shared pulse conditions and replacing both target tables, including their lengths |
+| `alignment_search_s` | Positive timing search around each square onset; default 1 us |
+| `capture_reference_start_s` | Optional first-square timestamp in scope coordinates; shifts the complete schedule while preserving pulse spacing. Composite lab preset: 0 s. Omit to use the sequence `Scope_Trig` origin. |
+| `capture_window` | `sequence` derives the download bounds from the anchored sequence, overriding inherited scope bounds; enabled in the composite preset. Default `configured` preserves explicit scope bounds. |
+| `capture_pre_margin_s` | Time before the first square in sequence mode; default 10 us; must exceed alignment search. |
+| `capture_post_margin_s` | Time after the last target in sequence mode; default 20 us; must exceed alignment search. |
+| `middle_fraction` | Reference plateau fraction; default 0.6 |
+| `minimum_coherence` | Minimum phase coherence on that plateau; default 0.9 |
+| `maximum_relative_spread` | Maximum (90th-10th percentile)/median plateau amplitude spread; default 0.2 |
+| `amplitude_logit_learning_rate` | Adam learning rate for unrestricted amplitude logits; default 0.02 |
+| `amplitude_logit_step` | Maximum per-update change of each amplitude logit; default 0.02; not amplitude fraction/percent |
+
+Composite amplitude coefficients are `a_max * sigmoid(z)`, where `a_max` is the
+configured maximum Rabi frequency divided by amplitude-100 calibration. The
+SPSA perturbations are made directly in logit space and phase-coefficient space.
+The full measured losses already include sigmoid decoding and spline expansion,
+so neither `B.T` nor the sigmoid derivative is applied again. Physical
+coefficients are decoded after every update;
+there is no amplitude projection. Initial endpoint fractions are moved inward
+by `1e-6` to obtain finite logits (the BB1 seed is unchanged). Explicit old
+`optimization.amplitude_learning_rate`/`amplitude_step` keys are rejected for
+this workflow; use the two `composite` logit controls instead. Checkpoints save
+logits, decoded amplitudes, the maximum, and logit-space Adam moments.
+
+The effective target duration comes from RF-gate events in the script, including
+trailing gated events. For `existing_tables`, `pulse.samples` must match both
+existing target tables; `configured` replaces them with `pulse.samples` entries.
+For configured symmetric BB1 X(pi), the sample count must be divisible by 10:
+exact phase steps form a fixed baseline, with spline phase corrections starting
+at zero. The local preset selects BB1, 60 us, 6000 entries with 1500 coefficients per family, and the `value`
+parameter field (6 repetitions in the saved script). The original table lengths
+are preserved for failure restoration. Playback dwell still requires operator
+verification; table timing metadata is not rewritten.
+The square is required at amplitude 100 and phase zero;
+`calibration.rabi_at_100_hz` sets its known Rabi frequency (160000 in the local
+preset). A fixed `omega_rad_s_per_volt` and old BB1 phase-reference settings are
+not used. The operator must configure a scope record covering all pairs and
+their alignment margins. `scope.trigger_timeout_s` also bounds TNMR acquisition
+completion waits. The saved 59.78 us event values plus 220 ns trailing gates
+yield 60 us pulses; mismatched runtime parameters fail before
+upload. No script timing is automatically rewritten.
+
+### Sequence editing and TNMR control
 
 Offline `sequence.template` selects `pulse_phmod`, `inversion_phase`, `inversion_ampm` or `nvnmr`. Alternatively supply `input_path` and optional matched `tnt_path`. `json_input=true` reads an exported sequence JSON instead of TPS. Templates are package resources; outputs are copies.
 

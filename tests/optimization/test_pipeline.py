@@ -17,7 +17,6 @@ from hardware_capture.optimization.pipeline import (
     upload_tables_with_readback,
 )
 
-
 pytestmark = pytest.mark.unit
 
 
@@ -28,6 +27,10 @@ class FakeTNMR:
             "phase": "20\r\n",
         }
         self.events: list[str] = []
+        self.shot_tables = []
+
+    def snapshot(self):
+        return {"acquisition_complete": True}
 
     def get_table_list(self):
         return list(self.tables)
@@ -44,13 +47,21 @@ class FakeTNMR:
 
     def zero_and_go(self):
         self.events.append("zg")
+        self.shot_tables.append(
+            {
+                name: parse_numeric_table(value).copy()
+                for name, value in self.tables.items()
+            }
+        )
 
     def stop(self):
         self.events.append("stop")
 
 
 class FakeScope:
-    def __init__(self, tnmr: FakeTNMR, *, carrier_hz: float, phase_offset_rad: float) -> None:
+    def __init__(
+        self, tnmr: FakeTNMR, *, carrier_hz: float, phase_offset_rad: float
+    ) -> None:
         self.tnmr = tnmr
         self.carrier_hz = carrier_hz
         self.phase_offset_rad = phase_offset_rad
@@ -117,7 +128,23 @@ def test_upload_tables_requires_full_numeric_readback() -> None:
 
 
 @pytest.mark.parametrize("custom_seed", [False, True])
-def test_fake_end_to_end_stage_one_and_one_update_run(tmp_path: Path, custom_seed) -> None:
+def test_fake_end_to_end_stage_one_and_one_update_run(
+    tmp_path: Path, custom_seed, monkeypatch
+) -> None:
+    from hardware_capture.optimization import core, pipeline
+
+    monkeypatch.setattr(
+        core, "robustness_grape_gradient", lambda *_: pytest.fail("GRAPE backward pass")
+    )
+    actual_adam = pipeline.adam_update
+    updates = []
+
+    def adam(parameters, gradient, state, **kwargs):
+        result = actual_adam(parameters, gradient, state, **kwargs)
+        updates.append((gradient.copy(), result[0].copy()))
+        return result
+
+    monkeypatch.setattr(pipeline, "adam_update", adam)
     tnt_path = tmp_path / "working_copy.tnt"
     tnt_path.write_bytes(b"fake")
     tnmr = FakeTNMR()
@@ -148,15 +175,15 @@ def test_fake_end_to_end_stage_one_and_one_update_run(tmp_path: Path, custom_see
         threshold_weight=0.0,
         cvar_weight=0.0,
         update_count=1,
-        initial_amplitude_coefficients=tuple([.2] * 25) if custom_seed else None,
-        initial_phase_coefficients_rad=tuple([0.] * 25) if custom_seed else None,
+        initial_amplitude_coefficients=tuple([0.2] * 25) if custom_seed else None,
+        initial_phase_coefficients_rad=tuple([0.0] * 25) if custom_seed else None,
     )
 
     result = run_closed_loop_optimizer(config, tnmr=tnmr, scope=scope)
 
     assert result.best_epoch in {0, 1}
     assert result.phase_reference.offset_rad == pytest.approx(0.31, abs=0.08)
-    assert scope.capture_count == (5 if custom_seed else 4)
+    assert scope.capture_count == (7 if custom_seed else 6)
     assert tnmr.events[:4] == ["set:amp", "set:phase", "armed", "zg"]
     assert (result.run_directory / "stage1_phase_reference.json").exists()
     assert (result.run_directory / "initial_measured_heatmap.png").exists()
@@ -173,6 +200,31 @@ def test_fake_end_to_end_stage_one_and_one_update_run(tmp_path: Path, custom_see
     assert (result.run_directory / "checkpoint_latest.npz").exists()
     assert (result.run_directory / "final_measured_heatmap.png").exists()
     assert (result.run_directory / "summary.json").exists()
+    summary = json.loads((result.run_directory / "summary.json").read_text())
+    assert summary["gradient_method"] == "spsa"
+    assert summary["amplitude_parameterization"] == "sigmoid"
+    with np.load(result.run_directory / "epoch_0001_spsa.npz") as pair:
+        expected = (pair["plus_losses"][0] - pair["minus_losses"][0]) / (
+            2 * pair["steps"] * pair["directions"][0]
+        )
+        assert updates[0][0] == pytest.approx(expected[:25])
+        assert updates[1][0] == pytest.approx(expected[25:])
+        for member in ("plus", "minus"):
+            with np.load(
+                result.run_directory / f"epoch_0001_direction_000_{member}.npz"
+            ) as measured:
+                assert pair[f"{member}_losses"][0] == measured["loss"]
+                assert pair[f"{member}_parameters"][0, :25] == pytest.approx(
+                    measured["amplitude_logits"]
+                )
+    with np.load(result.run_directory / "checkpoint_latest.npz") as state:
+        assert state["amplitude_logits"] == pytest.approx(updates[0][1])
+        assert state["phase_coefficients_rad"] == pytest.approx(updates[1][1])
+        assert state["amplitude_logit_first"] == pytest.approx(0.1 * updates[0][0])
+        assert not state["center_is_measured"]
+    with np.load(result.run_directory / "best_measured.npz") as best:
+        assert tnmr.shot_tables[-1]["amp"] == pytest.approx(best["amplitude_percent"])
+        assert tnmr.shot_tables[-1]["phase"] == pytest.approx(best["phase_degrees"])
 
 
 def test_failure_restores_original_tables_and_stops(tmp_path):
@@ -186,10 +238,15 @@ def test_failure_restores_original_tables_and_stops(tmp_path):
             raise RuntimeError("synthetic trigger failure")
 
     config = ClosedLoopConfig(
-        tnt_path=source, amplitude_table_name="amp", phase_table_name="phase",
-        visa_resource="FAKE", results_root=tmp_path / "output",
-        coefficient_count=25, table_entry_count=100,
-        phase_reference_captures=2, update_count=0,
+        tnt_path=source,
+        amplitude_table_name="amp",
+        phase_table_name="phase",
+        visa_resource="FAKE",
+        results_root=tmp_path / "output",
+        coefficient_count=25,
+        table_entry_count=100,
+        phase_reference_captures=2,
+        update_count=0,
     )
     with pytest.raises(RuntimeError, match="synthetic trigger failure"):
         run_closed_loop_optimizer(config, tnmr=tnmr, scope=BrokenScope())
@@ -204,20 +261,110 @@ def test_public_live_api_uses_shared_conditions_and_injected_devices(tmp_path):
     source = tmp_path / "working.tnt"
     source.write_bytes(b"fake")
     tnmr = FakeTNMR()
-    scope = FakeScope(tnmr, carrier_hz=500000, phase_offset_rad=.31)
-    config = Experiment({
-        "pulse": {"kind": "square", "duration_s": 100e-6, "samples": 100},
-        "calibration": {"rabi_at_100_hz": 25000, "omega_rad_s_per_volt": 2 * math.pi * 25000},
-        "scope": {"resource": "FAKE", "window_start_s": -20e-6, "window_end_s": 120e-6},
-        "demodulation": {"frequency_hz": 500000, "cutoff_hz": 200000, "q_sign": 1},
-        "window": {"start_s": 0},
-        "tnmr": {"path": str(source), "amplitude_table": "amp", "phase_table": "phase"},
-        "optimization": {"coefficients": 25, "updates": 0, "phase_reference_captures": 2},
-        "scan": {"amplitude_errors": [0], "detuning_hz": [0]},
-        "output": {"directory": str(tmp_path / "output")},
-    })
+    scope = FakeScope(tnmr, carrier_hz=500000, phase_offset_rad=0.31)
+    config = Experiment(
+        {
+            "pulse": {"kind": "square", "duration_s": 100e-6, "samples": 100},
+            "calibration": {
+                "rabi_at_100_hz": 25000,
+                "omega_rad_s_per_volt": 2 * math.pi * 25000,
+            },
+            "scope": {
+                "resource": "FAKE",
+                "window_start_s": -20e-6,
+                "window_end_s": 120e-6,
+            },
+            "demodulation": {"frequency_hz": 500000, "cutoff_hz": 200000, "q_sign": 1},
+            "window": {"start_s": 0},
+            "tnmr": {
+                "path": str(source),
+                "amplitude_table": "amp",
+                "phase_table": "phase",
+            },
+            "optimization": {
+                "coefficients": 25,
+                "updates": 0,
+                "phase_reference_captures": 2,
+            },
+            "scan": {"amplitude_errors": [0], "detuning_hz": [0]},
+            "output": {"directory": str(tmp_path / "output")},
+        }
+    )
     result = run("optimize-live", config, live=True, scope=scope, tnmr_device=tnmr)
     assert result["target"] == "fixed_xpi"
     assert scope.capture_count == 4
     assert Path(result["run_directory"]).is_dir()
     assert Path(result["pulse_path"]).is_file()
+
+
+def test_live_spsa_failure_never_updates_adam(tmp_path, monkeypatch):
+    from hardware_capture.optimization import pipeline
+
+    source = tmp_path / "fake.tnt"
+    source.write_bytes(b"fake")
+    tnmr = FakeTNMR()
+    original = tnmr.tables.copy()
+    omega = 5 * math.pi / 100e-6
+    config = ClosedLoopConfig(
+        tnt_path=source,
+        amplitude_table_name="amp",
+        phase_table_name="phase",
+        visa_resource="FAKE",
+        results_root=tmp_path / "output",
+        acquisition_window_start_s=-20e-6,
+        acquisition_window_end_s=120e-6,
+        pulse_duration_s=100e-6,
+        pulse_start_s=0,
+        demodulation_frequency_hz=500e3,
+        baseband_cutoff_hz=200e3,
+        q_sign=1,
+        scope_omega_rad_s_per_volt=omega,
+        omega_at_amplitude_100_rad_s=omega,
+        coefficient_count=25,
+        table_entry_count=100,
+        phase_reference_captures=2,
+        update_count=1,
+        amplitude_errors=np.array([0.0]),
+        detuning_ratios=np.array([0.0]),
+    )
+    scope = FakeScope(tnmr, carrier_hz=500e3, phase_offset_rad=0.31)
+    actual_objective = pipeline.robustness_objective
+    calls = []
+
+    def loss(*args):
+        calls.append(1)
+        if len(calls) == 3:  # initial, plus, failing minus
+            raise RuntimeError("probe loss failed")
+        return actual_objective(*args)
+
+    monkeypatch.setattr(pipeline, "robustness_objective", loss)
+    monkeypatch.setattr(
+        pipeline,
+        "adam_update",
+        lambda *_args, **_kwargs: pytest.fail("Incomplete pair updated Adam"),
+    )
+    with pytest.raises(RuntimeError, match="probe loss failed"):
+        run_closed_loop_optimizer(config, tnmr=tnmr, scope=scope)
+    run_dir = next((tmp_path / "output").iterdir())
+    assert (run_dir / "epoch_0001_direction_000_minus_raw.npz").exists()
+    assert not (run_dir / "checkpoint_latest.npz").exists()
+    assert tnmr.tables == original
+
+
+@pytest.mark.parametrize(
+    "section,settings,match",
+    [
+        ("spsa", {"directions": 0}, "spsa.directions"),
+        ("optimization", {"amplitude_step": 0.02}, "replace optimization"),
+        ("optimization", {"amplitude_logit_step": 0}, "maximum_amplitude_logit_step"),
+    ],
+)
+def test_live_settings_fail_during_device_free_plan(section, settings, match):
+    from hardware_capture.api import plan
+    from hardware_capture.configuration import Experiment
+
+    config = Experiment.load("projects/optimization/live/config.json").with_updates(
+        **{section: settings}
+    )
+    with pytest.raises(ValueError, match=match):
+        plan("optimize-live", config)

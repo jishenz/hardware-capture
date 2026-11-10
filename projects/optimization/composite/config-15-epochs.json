@@ -1,0 +1,14 @@
+{
+  "extends": "config.json",
+  "pulse": {
+    "kind": "bb1",
+    "angle_deg": 180,
+    "axis_phase_deg": 0
+  },
+  "optimization": {
+    "updates": 15
+  },
+  "composite": {
+    "seed": "configured"
+  }
+}

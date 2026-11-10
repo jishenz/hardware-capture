@@ -1,0 +1,30 @@
+{
+  "extends": "../../../configs/lab.local.json",
+  "pulse": {
+    "kind": "bb1", "angle_deg": 180, "axis_phase_deg": 0,
+    "duration_s": 0.00006, "samples": 6000, "max_rabi_hz": 160000
+  },
+  "calibration": {"rabi_at_100_hz": 160000},
+  "optimization": {"updates": 1000},
+  "spsa": {
+    "directions": 1,
+    "seed": 20260820,
+    "amplitude_logit_perturbation": 0.08,
+    "phase_perturbation_rad": 0.05,
+    "perturbation_decay": 0.101
+  },
+  "composite": {
+    "parameter_source": "value",
+    "seed": "configured",
+    "amplitude_logit_learning_rate": 0.02,
+    "amplitude_logit_step": 0.02,
+    "alignment_search_s": 0.000001,
+    "capture_reference_start_s": 0.0,
+    "capture_window": "sequence",
+    "capture_pre_margin_s": 0.00001,
+    "capture_post_margin_s": 0.00002,
+    "middle_fraction": 0.6,
+    "minimum_coherence": 0.9,
+    "maximum_relative_spread": 0.2
+  }
+}

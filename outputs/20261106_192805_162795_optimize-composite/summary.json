@@ -1,0 +1,23 @@
+{
+  "run_directory": "20261106_192805_162795_optimize-composite",
+  "status": "partial_saved_run",
+  "planned_updates": 1000,
+  "completed_updates": 594,
+  "history_rows": 595,
+  "target": "fixed_xpi",
+  "initial_loss": 0.5377047726911256,
+  "best_epoch": 594,
+  "best_loss": 0.48180592502603814,
+  "best_mean_fidelity": 0.6013310386773372,
+  "best_center_fidelity": 0.952920024639041,
+  "best_worst_fidelity": 1.684487838991522e-05,
+  "best_fraction_at_or_above_threshold": 0.011337868480725623,
+  "best_measurement_filename": "epoch_0594_direction_000_minus.npz",
+  "final_verification_available": false,
+  "heatmap_color_limits": [
+    0.99,
+    1.0
+  ],
+  "archive_scope": "Summary artifacts only; machine-specific configurations, per-epoch measurements, raw captures, checkpoints, and initial seed are excluded.",
+  "physical_state": "unverified"
+}

@@ -25,6 +25,7 @@ Tables merge recursively; arrays replace their inherited values. Paths are resol
 | `input.shot_command` | Optional trusted local shell command invoked after arming the scope; does not apply to existing-record reads |
 | `scope.resource`, `channel` | Explicit VISA address and channel, e.g. `CHAN1` |
 | `scope.window_start_s`, `window_end_s` | Requested raw acquisition interval in seconds |
+| `scope.waveform_format` | Network waveform encoding: `WORD` (default, unsigned little-endian 16-bit), `ASC`/`ASCII` (text fallback), or `BYTE` (8-bit) |
 | `scope.timeout_ms` | VISA command timeout |
 | `scope.trigger_timeout_s`, `armed_timeout_s`, `poll_s` | Acquisition synchronization timeouts/polling |
 | `scope.allow_clamp` | Ordinary capture may clamp a requested interval to available memory; default false |
@@ -33,6 +34,25 @@ Tables merge recursively; arrays replace their inherited values. Paths are resol
 Raw CSV uses `time_s,chan1_voltage_V` (or another channel-voltage header). Comment rows beginning with `#` are accepted. Samples must have finite increasing uniformly spaced times and finite voltages. The first two columns are raw time in seconds and voltage in volts, not pre-demodulated I/Q or a TNMR command table. Capture saves that format. Raw acquisition assumes the scope trigger, sampling/memory and voltage scales are already configured.
 
 The live optimizer uses its own synchronized single-shot sequence and strict window coverage; `read_current`, `shot_command`, `shots`, `allow_clamp` and `rearm` are ordinary-capture settings, not optimizer controls.
+
+Capture and both live optimizers default to binary `WORD` transfer for the RIGOL
+DHO4804. Time windows remain specified in seconds and are converted to point
+indices from the fresh waveform preamble. The reader selects the format before
+fetching that preamble, checks that the scope reports the requested encoding,
+and converts binary codes to volts as `(code - YORigin - YREFerence) * YINCrement`.
+VISA handles IEEE binary block headers and terminators; each block must contain
+exactly the requested point count. The SCPI block size remains 100,000 points.
+The VISA read buffer is 1 MiB for binary transfers.
+
+Set `"scope": {"waveform_format": "ASC"}` in a profile to explicitly use the
+previous text transfer. The scope's front-panel Save Wave `.bin`/`.csv` selection
+does not control this network encoding. `WORD` preserves the 12-bit ADC codes
+in a 16-bit container; `BYTE` has only eight bits and is not the default for RF
+fidelity analysis. Instrument/firmware behavior and speed require human-operated
+validation; offline tests cannot establish those physical results.
+
+References: [RIGOL DHO1000/DHO4000 Programming Guide, section 3.29](https://www.batronix.com/files/Rigol/Oszilloskope/DHO1000/dho10004000_programmingguide_en.pdf#page=431)
+and [PyVISA binary-transfer documentation](https://pyvisa.readthedocs.io/en/latest/introduction/rvalues.html#reading-binary-values).
 
 ## Demodulation and windows
 

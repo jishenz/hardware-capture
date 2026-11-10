@@ -403,7 +403,7 @@ def test_sequence_window_is_passed_to_every_scope_read(tmp_path, monkeypatch):
     monkeypatch.setattr(workflow, "load_sequence_file", lambda _: sequence_fixture())
     config = config_for_test().with_updates(
         tnmr={"path": "not-opened.tnt"},
-        scope={"window_start_s": -0.001, "window_end_s": 0.004},
+        scope={"window_start_s": -0.001, "window_end_s": 0.004, "waveform_format": "ASC"},
         composite={"capture_window": "sequence", "capture_reference_start_s": 0.0},
     )
     effective, plan = workflow.prepare(config)
@@ -419,6 +419,7 @@ def test_sequence_window_is_passed_to_every_scope_read(tmp_path, monkeypatch):
     class CheckedScope(FakeScope):
         def capture_single_waveform(self, capture_config, **kwargs):
             requests.append(capture_config)
+            assert capture_config.waveform_format == "ASC"
             assert (
                 capture_config.window_start_s
                 == effective.section("scope")["window_start_s"]

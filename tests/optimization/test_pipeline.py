@@ -271,6 +271,7 @@ def test_public_live_api_uses_shared_conditions_and_injected_devices(tmp_path):
             },
             "scope": {
                 "resource": "FAKE",
+                "waveform_format": "ASC",
                 "window_start_s": -20e-6,
                 "window_end_s": 120e-6,
             },
@@ -290,6 +291,8 @@ def test_public_live_api_uses_shared_conditions_and_injected_devices(tmp_path):
             "output": {"directory": str(tmp_path / "output")},
         }
     )
+    from hardware_capture.workflows.optimize import hardware_config
+    assert hardware_config(config, tmp_path).scope_waveform_format == "ASC"
     result = run("optimize-live", config, live=True, scope=scope, tnmr_device=tnmr)
     assert result["target"] == "fixed_xpi"
     assert scope.capture_count == 4

@@ -16,7 +16,7 @@ DEFAULT_IP = "192.168.1.152"
 DEFAULT_TIMEOUT_MS = 20_000
 DEFAULT_CHUNK_POINTS = 100_000
 DEFAULT_WAVEFORM_MODE = "RAW"
-DEFAULT_WAVEFORM_FORMAT = "ASC"
+DEFAULT_WAVEFORM_FORMAT = "WORD"
 DEFAULT_TRIGGER_TIMEOUT_S = 30.0
 DEFAULT_ARMED_TIMEOUT_S = 2.0
 DEFAULT_TRIGGER_POLL_S = 0.05
@@ -134,6 +134,18 @@ def normalize_channel(channel: str | int) -> str:
     if text.startswith("CHAN") and text[4:].isdigit():
         return text
     raise ValueError(f"Unsupported channel {channel!r}. Use values like 1 or CHAN1.")
+
+
+def normalize_waveform_format(value: str) -> str:
+    """Return a supported transfer token (WORD is the 16-bit DHO default)."""
+
+    if isinstance(value, str):
+        token = value.strip().upper()
+        if token in {"ASC", "ASCII"}:
+            return "ASC"
+        if token in {"WORD", "BYTE"}:
+            return token
+    raise ValueError("scope.waveform_format must be WORD, BYTE, or ASC")
 
 
 def parse_preamble(raw: str) -> ScopePreamble:
@@ -270,6 +282,7 @@ def save_waveform_csv(
 
 
 def _validate_capture_config(config: WaveformCaptureConfig) -> None:
+    normalize_waveform_format(config.waveform_format)
     if config.chunk_points < 1:
         raise ValueError("chunk_points must be 1 or greater.")
     if config.window_start_s is None or config.window_end_s is None:
@@ -524,15 +537,70 @@ class RigolDHO:
             self.write(":STOP")
         self.write(f":WAV:SOUR {channel}")
         self.write(f":WAV:MODE {config.waveform_mode}")
-        self.write(f":WAV:FORM {config.waveform_format}")
-        return channel, self.get_preamble()
+        waveform_format = normalize_waveform_format(config.waveform_format)
+        self.write(f":WAV:FORM {waveform_format}")
+        # Y reference/scaling depend on the selected transfer format.
+        preamble = self.get_preamble()
+        actual_format = {"0": "BYTE", "1": "WORD", "2": "ASC"}.get(
+            preamble.data_format
+        )
+        if actual_format != waveform_format:
+            raise ValueError(
+                f"Scope preamble reports format {preamble.data_format!r}; "
+                f"requested {waveform_format}. Refusing to decode mismatched data."
+            )
+        scales = [
+            preamble.x_increment, preamble.x_origin, preamble.x_reference,
+            preamble.y_increment, preamble.y_origin, preamble.y_reference,
+        ]
+        if (
+            not np.all(np.isfinite(scales))
+            or preamble.x_increment <= 0
+            or preamble.y_increment <= 0
+        ):
+            raise ValueError("Scope preamble contains invalid timing or voltage scaling")
+        return channel, preamble
 
-    def _read_voltage(self, start: int, stop: int, chunk_points: int) -> np.ndarray:
+    def _read_voltage(
+        self, start: int, stop: int, chunk_points: int, preamble: ScopePreamble
+    ) -> np.ndarray:
         chunks = []
+        waveform_format = {"0": "BYTE", "1": "WORD", "2": "ASC"}[
+            preamble.data_format
+        ]
         for chunk_start, chunk_stop in chunk_ranges(start, stop, chunk_points):
             self.write(f":WAV:STAR {chunk_start}")
             self.write(f":WAV:STOP {chunk_stop}")
-            chunks.append(parse_ascii_waveform(self.query(":WAV:DATA?")))
+            if waveform_format == "ASC":
+                voltage = parse_ascii_waveform(self.query(":WAV:DATA?"))
+            else:
+                # DHO WORD samples are unsigned little-endian 16-bit codes.
+                # Let VISA consume the IEEE block header and trailing terminator;
+                # never decode/strip binary payloads as text (0x0A is valid data).
+                codes = np.asarray(
+                    self._ensure_session().query_binary_values(
+                        ":WAV:DATA?",
+                        datatype="H" if waveform_format == "WORD" else "B",
+                        is_big_endian=False,
+                        container=np.array,
+                        header_fmt="ieee",
+                        expect_termination=True,
+                        chunk_size=1024 * 1024,
+                    ),
+                    dtype=np.float64,
+                )
+                voltage = (
+                    codes - preamble.y_origin - preamble.y_reference
+                ) * preamble.y_increment
+            expected = chunk_stop - chunk_start + 1
+            if voltage.shape != (expected,):
+                raise ValueError(
+                    f"Scope returned {voltage.size} samples for points "
+                    f"{chunk_start} to {chunk_stop}; expected {expected}"
+                )
+            if not np.all(np.isfinite(voltage)):
+                raise ValueError("Scope returned nonfinite waveform voltages")
+            chunks.append(voltage)
         return np.concatenate(chunks) if chunks else np.asarray([], dtype=float)
 
     def capture_waveform(self, config: WaveformCaptureConfig) -> ScopeWaveform:
@@ -542,7 +610,7 @@ class RigolDHO:
         source = self.identify()
         channel, preamble = self._configure_waveform_read(config)
         start_point, stop_point = self._resolve_point_window(config, preamble)
-        voltage = self._read_voltage(start_point, stop_point, config.chunk_points)
+        voltage = self._read_voltage(start_point, stop_point, config.chunk_points, preamble)
         if len(voltage) < 2:
             raise ValueError("Scope returned fewer than two waveform samples.")
 
@@ -575,6 +643,7 @@ class RigolDHO:
     ) -> ScopeWaveform:
         """Arm SINGLE mode, optionally start a shot, wait for STOP, then read."""
 
+        _validate_capture_config(config)
         self.write(f":WAV:SOUR {normalize_channel(config.channel)}")
         self.arm_single(
             wait_until_armed=confirm_armed,

@@ -1,7 +1,6 @@
 """File-only recording checks; never access instruments."""
 
 import json
-import time
 
 import numpy as np
 import pytest
@@ -41,7 +40,11 @@ def test_stage_record_survives_failure_and_exposes_in_progress_work(tmp_path):
     assert all(stage["elapsed_s"] >= 0 for stage in saved.values())
 
 
-def test_heartbeat_updates_during_blocked_stage_and_stops_after_exit(tmp_path, capsys):
+def test_progress_updates_only_at_stage_boundaries(tmp_path, capsys, monkeypatch):
+    clock = [0.0]
+    monkeypatch.setattr(
+        "hardware_capture.optimization.recording.perf_counter", lambda: clock[0]
+    )
     path = tmp_path / "progress.json"
     with measure_stage(
         tmp_path,
@@ -49,25 +52,27 @@ def test_heartbeat_updates_during_blocked_stage_and_stops_after_exit(tmp_path, c
         {},
         "acquire_and_transfer",
         description="Epoch 03/15, plus probe | capture 6/32",
-        heartbeat_s=0.01,
     ):
-        initial = json.loads(path.read_text())
-        deadline = time.monotonic() + 2
-        while True:
-            progress = json.loads(path.read_text())
-            if progress["updated_at"] != initial["updated_at"]:
-                break
-            assert time.monotonic() < deadline, "Heartbeat did not update"
-            time.sleep(0.005)
+        initial = path.read_text()
+        progress = json.loads(initial)
         assert progress["status"] == "running"
-        assert progress["elapsed_s"] > initial["elapsed_s"]
+        assert progress["elapsed_s"] == 0.0
+        clock[0] = 30.0
+        assert path.read_text() == initial
+        assert "waiting/working" not in capsys.readouterr().out
     completed = path.read_text()
-    time.sleep(0.03)
-    assert path.read_text() == completed
     assert json.loads(completed)["status"] == "complete"
+    assert json.loads(completed)["elapsed_s"] == 30.0
+    timing = json.loads((tmp_path / "probe_timing.json").read_text())[
+        "acquire_and_transfer"
+    ]
+    progress = json.loads(completed)
+    for field in ("status", "elapsed_s", "updated_at"):
+        assert timing[field] == progress[field]
     output = capsys.readouterr().out
     assert "Epoch 03/15, plus probe | capture 6/32" in output
-    assert "Python heartbeat, stage has not returned" in output
+    assert "complete (30.00 s)" in output
+    assert "heartbeat" not in output
 
 
 def test_keyboard_interrupt_records_interrupted_stage(tmp_path):

@@ -11,7 +11,7 @@ import numpy as np
 from scipy.optimize import lsq_linear
 
 from hardware_capture.configuration import Experiment
-from hardware_capture.devices.rigol import RigolDHO, WaveformCaptureConfig
+from hardware_capture.devices.rigol import RigolDHO, WaveformCaptureConfig, normalize_waveform_format
 from hardware_capture.devices.tnmr import TNMRControl
 from hardware_capture.optimization.acceptance import FidelityAcceptance
 from hardware_capture.optimization.amplitude import amplitude_logits, sigmoid_amplitude
@@ -145,6 +145,7 @@ def prepare(config: Experiment):
             }
         )
     scope = effective.section("scope")
+    normalize_waveform_format(scope.get("waveform_format", "WORD"))
     config.require("scope", "resource")
     start, end = scope.get("window_start_s", -10e-6), scope.get("window_end_s", 100e-6)
     if start > captured.reference_start_s - search or end < captured.end_s + search:
@@ -401,6 +402,7 @@ def run_composite(
                 raw = scope.capture_single_waveform(
                     WaveformCaptureConfig(
                         channel=scope_options.get("channel", "CHAN1"),
+                        waveform_format=scope_options.get("waveform_format", "WORD"),
                         window_start_s=scope_options.get("window_start_s", -10e-6),
                         window_end_s=scope_options.get("window_end_s", 100e-6),
                         allow_clamp=False,

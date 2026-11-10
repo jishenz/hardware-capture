@@ -38,7 +38,7 @@ FIELDS = {
     },
     "input": {"kind", "path", "read_current", "shots", "shot_command"},
     "output": {"directory", "show_plots"},
-    "scope": {"resource", "channel", "window_start_s", "window_end_s", "timeout_ms", "trigger_timeout_s", "armed_timeout_s", "poll_s", "allow_clamp", "rearm"},
+    "scope": {"resource", "channel", "window_start_s", "window_end_s", "timeout_ms", "trigger_timeout_s", "armed_timeout_s", "poll_s", "allow_clamp", "rearm", "waveform_format"},
     "demodulation": {"frequency_hz", "cutoff_hz", "filter_order", "q_sign"},
     "window": {"start_s", "end_s", "threshold_fraction", "padding_s"},
     "pulse": {"kind", "duration_s", "samples", "angle_deg", "axis_phase_deg", "peak_rabi_hz", "max_rabi_hz", "parameters", "path", "amplitude_path", "phase_path", "amplitude_unit", "phase_unit"},

@@ -238,6 +238,7 @@ def hardware_config(
         visa_resource=config.require("scope", "resource"),
         results_root=directory,
         scope_channel=scope.get("channel", "CHAN1"),
+        scope_waveform_format=scope.get("waveform_format", "WORD"),
         acquisition_window_start_s=scope.get("window_start_s", -10e-6),
         acquisition_window_end_s=scope.get("window_end_s", 100e-6),
         pulse_duration_s=duration,

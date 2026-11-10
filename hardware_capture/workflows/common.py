@@ -10,7 +10,7 @@ import subprocess
 import numpy as np
 
 from hardware_capture.configuration import Experiment, positive
-from hardware_capture.devices.rigol import RigolDHO, WaveformCaptureConfig, save_waveform_csv, normalize_channel
+from hardware_capture.devices.rigol import RigolDHO, WaveformCaptureConfig, save_waveform_csv, normalize_channel, normalize_waveform_format
 from hardware_capture.calibration.bb1 import load_waveform_csv
 from hardware_capture.signal.demodulation import demodulate_raw_rf, detect_pulse_window
 
@@ -48,7 +48,7 @@ def capture_config(config: Experiment) -> WaveformCaptureConfig:
     start, end = scope.get("window_start_s", -10e-6), scope.get("window_end_s", 100e-6)
     if not start < end:
         raise ValueError("scope.window_start_s must precede window_end_s")
-    return WaveformCaptureConfig(channel=normalize_channel(scope.get("channel", "CHAN1")), window_start_s=start, window_end_s=end, allow_clamp=scope.get("allow_clamp", False))
+    return WaveformCaptureConfig(channel=normalize_channel(scope.get("channel", "CHAN1")), window_start_s=start, window_end_s=end, allow_clamp=scope.get("allow_clamp", False), waveform_format=normalize_waveform_format(scope.get("waveform_format", "WORD")))
 
 
 def acquire(config: Experiment, *, scope=None):

@@ -140,14 +140,16 @@ settings retain the legacy unconstrained behavior.
 
 The shared `spsa` defaults match DiamondGUI's initial scales: 0.08 in amplitude
 logit units, 0.05 radians in phase coefficients, decay exponent 0.101, seed
-20260820, and one direction per update. Scales decrease with the update index;
+20260820, and one direction per update. This project's preset overrides the
+direction count to two, averaging two independent gradients from four probe
+captures before each Adam update. Scales decrease with the update index;
 probe order alternates. More directions average independent gradient estimates.
 Passing probes are eligible for best-candidate selection along with measured,
 accepted centers. At completion, the best passing candidate is restored and
 verified without an update.
 
-With N=6 and 10 updates, one direction gives 34–64 scope records: one initial,
-20 probes, 10–40 center trials, and three final verifications. Each record contains six pairs.
+With N=6 and 10 updates, two directions give 54–84 scope records: one initial,
+40 probes, 10–40 center trials, and three final verifications. Each record contains six pairs.
 An incomplete/invalid pair retains available evidence but cannot update Adam
 or advance the last complete checkpoint.
 
@@ -158,12 +160,11 @@ Each candidate prints stage starts and elapsed times and writes
 Stages separate upload/readback, acquisition plus scope transfer, raw saving,
 completion wait, demodulation, calibration, loss evaluation, and reduced saving.
 A stage marked `running` in an interrupted run does not establish device state.
-Every five seconds during a long stage, a background reporter prints the epoch,
-probe, capture count, stage, and elapsed time. It only writes files and console
-messages; it never polls devices. `progress.json` provides the latest stage,
-process ID, elapsed time, and UTC heartbeat timestamp. A heartbeat confirms that
-Python can report status, not that a device call is advancing. A frozen process
-may stop emitting heartbeats; stale output does not establish hardware state.
+Progress is reported only at stage start and exit, with no periodic heartbeat
+or background reporter. `progress.json` records the latest stage transition,
+process ID, elapsed time, and UTC update timestamp. During a blocking stage,
+the files retain the start record until the stage exits; they do not establish
+whether a device call is advancing or the physical device state.
 Failures and keyboard interruption are labeled explicitly for the active stage,
 and successful completion prints the total updates and captures.
 
@@ -184,7 +185,8 @@ not verified hardware acquisition or end-to-end run timings.
 The previous -10 us to 4 ms read window contained 16,040,001 samples at 4 GS/s,
 requiring 161 ASCII chunks. The sequence-derived six-pair window contains about
 3.35 million samples (34 chunks), a 79% reduction. Actual transfer speedup still
-requires operator-run timing evidence. The ASCII transfer format is unchanged.
+requires operator-run timing evidence. The reader now defaults to 16-bit WORD
+binary transfer; `scope.waveform_format="ASC"` selects the ASCII fallback.
 
 Only the calibrated target pulses contribute to the spin-propagation loss.
 However, reduction subtracts an I/Q baseline estimated from off-pulse samples
@@ -306,8 +308,8 @@ inspection, not automatic resume.
 `run_15_epochs.py` now uses `config.json`: 1000 SPSA updates starting from
 configured symmetric BB1 X(pi), 60 us, 6000 samples, and 125 amplitude plus
 125 phase coefficients. The current saved sequence resolves six square/target
-pairs per record. With the 99% acceptance rule, one direction means 3004–6004
-records: initial seed, 2000 probes, 1000–4000 center trials, and three independent
+pairs per record. With the 99% acceptance rule, two directions mean 5004–8004
+records: initial seed, 4000 probes, 1000–4000 center trials, and three independent
 final verifications. Previews report these bounds; summaries report actual counts.
 The legacy script filename is retained for existing commands. It honors
 `optimization.updates` in the selected configuration; there is no early

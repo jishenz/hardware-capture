@@ -18,6 +18,7 @@ from hardware_capture.devices.rigol import (
     RigolDHO,
     ScopeWaveform,
     WaveformCaptureConfig,
+    normalize_waveform_format,
 )
 from hardware_capture.devices.tnmr import TNMRControl
 from hardware_capture.figures import subplots
@@ -59,6 +60,7 @@ class ClosedLoopConfig:
     visa_resource: str
     results_root: Path
     scope_channel: str = "CHAN1"
+    scope_waveform_format: str = "WORD"
     acquisition_window_start_s: float = -10e-6
     acquisition_window_end_s: float = 100e-6
     pulse_duration_s: float = 60e-6
@@ -106,6 +108,7 @@ class ClosedLoopConfig:
     spsa: SPSAConfig = field(default_factory=SPSAConfig)
 
     def validate(self) -> None:
+        normalize_waveform_format(self.scope_waveform_format)
         self.spsa.validate()
         for name in (
             "amplitude_logit_learning_rate",
@@ -346,6 +349,7 @@ def _capture_and_demodulate(
     raw = scope.capture_single_waveform(
         WaveformCaptureConfig(
             channel=config.scope_channel,
+            waveform_format=config.scope_waveform_format,
             window_start_s=config.acquisition_window_start_s,
             window_end_s=config.acquisition_window_end_s,
             allow_clamp=False,

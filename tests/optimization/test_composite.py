@@ -1041,6 +1041,11 @@ def test_fidelity_floor_backtracks_and_excludes_better_infeasible_probe(
     assert float(rows[1]["spsa_plus_loss_mean"]) == 0.1
     assert float(rows[1]["spsa_plus_search_loss_mean"]) == pytest.approx(0.5)
     assert float(rows[1]["best_feasible_loss"]) == 0.4
+    assert float(rows[1]["search_loss"]) == pytest.approx(0.4)
+    assert float(rows[1]["spsa_plus_center_fidelity_min"]) == .95
+    assert float(rows[1]["amplitude_logit_step_rms"]) == pytest.approx(
+        float(rows[1]["proposed_amplitude_logit_step_rms"]) / 2)
+    assert (tmp_path / "optimizer_diagnostics.png").exists()
 
 
 def test_rejected_updates_retain_parameters_and_adam_state(tmp_path, monkeypatch):
@@ -1071,6 +1076,12 @@ def test_rejected_updates_retain_parameters_and_adam_state(tmp_path, monkeypatch
     assert parse_numeric_table(tnmr.tables["amp"]) == pytest.approx(
         tnmr.shot_tables[0]["amp"]
     )
+    import csv
+    with (tmp_path / "history.csv").open(newline="") as stream:
+        history = list(csv.DictReader(stream))
+    assert float(history[1]["amplitude_logit_step_rms"]) == 0
+    assert float(history[1]["phase_step_rms_rad"]) == 0
+    assert float(history[1]["proposed_amplitude_logit_step_rms"]) > 0
 
 
 @pytest.mark.parametrize("failure", ["seed", "verification"])

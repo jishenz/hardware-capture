@@ -1,4 +1,4 @@
-"""Prepare or run the BB1-seeded composite optimizer (1000 updates by default).
+"""Prepare or run the BB1-seeded composite optimizer (4000 updates by default).
 
 The legacy filename is retained so existing operator commands still work.
 

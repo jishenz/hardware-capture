@@ -230,6 +230,16 @@ rejected for this workflow to prevent silent unit changes. Phase update
 settings retain their existing meanings. Sigmoid gradients become small near
 the bounds; numerical tests do not establish improved hardware convergence.
 
+The current project preset overrides both learning rates to **0.04**:
+`composite.amplitude_logit_learning_rate=0.04` and
+`optimization.phase_learning_rate=0.04`. The amplitude-logit step cap is
+**0.04**, with the phase step cap retained at **0.1 radians** and the
+nominal-fidelity floor at **99%**. After comparing learning rates, a separate
+three-seed offline comparison at fixed rates of 0.04 tested amplitude caps
+0.02, 0.03, and 0.04. Cap 0.04 achieved lower best loss in all three seeds after
+1000 updates, with more fidelity rejections. These ideal-model results do not
+establish hardware performance. The preset requests 4000 updates.
+
 ## Output
 
 Each run creates a timestamped output folder containing:
@@ -303,13 +313,13 @@ inspection, not automatic resume.
 
 ## Run
 
-### BB1 experiment (human operator; 1000 updates by default)
+### BB1 experiment (human operator; 4000 updates by default)
 
-`run_15_epochs.py` now uses `config.json`: 1000 SPSA updates starting from
+`run_15_epochs.py` now uses `config.json`: 4000 SPSA updates starting from
 configured symmetric BB1 X(pi), 60 us, 6000 samples, and 125 amplitude plus
 125 phase coefficients. The current saved sequence resolves six square/target
-pairs per record. With the 99% acceptance rule, two directions mean 5004–8004
-records: initial seed, 4000 probes, 1000–4000 center trials, and three independent
+pairs per record. With the 99% acceptance rule, two directions mean 20004–32004
+records: initial seed, 16000 probes, 4000–16000 center trials, and three independent
 final verifications. Previews report these bounds; summaries report actual counts.
 The legacy script filename is retained for existing commands. It honors
 `optimization.updates` in the selected configuration; there is no early
@@ -355,6 +365,10 @@ Regenerate a curve from a saved or partial run without device access:
 ```powershell
 .\.venv\Scripts\python.exe projects/optimization/composite/run_15_epochs.py --plot-only "outputs/<run-folder>"
 ```
+
+For penalized-loss, nominal-fidelity and parameter-step plots, and a paired-seed
+comparison of current versus half learning rates in a fixed numerical model,
+see [optimizer diagnostics](../../../docs/optimizer-diagnostics.md).
 
 ### General workflow
 

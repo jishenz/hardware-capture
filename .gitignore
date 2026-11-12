@@ -7,7 +7,7 @@ __pycache__/
 build/
 dist/
 results/
-# Keep only the selected summary artifacts from the latest November 6 run.
+# Keep selected historical summaries and only the two plots from the latest run.
 outputs/*
 !outputs/20261106_192805_162795_optimize-composite/
 outputs/20261106_192805_162795_optimize-composite/*
@@ -17,6 +17,10 @@ outputs/20261106_192805_162795_optimize-composite/*
 !outputs/20261106_192805_162795_optimize-composite/loss_curve.png
 !outputs/20261106_192805_162795_optimize-composite/best_heatmap.png
 !outputs/20261106_192805_162795_optimize-composite/composite_schedule.json
+!outputs/20261112_163858_154311_optimize-composite/
+outputs/20261112_163858_154311_optimize-composite/*
+!outputs/20261112_163858_154311_optimize-composite/loss_curve.png
+!outputs/20261112_163858_154311_optimize-composite/best_heatmap.png
 generated/
 .env
 configs/lab.local.json

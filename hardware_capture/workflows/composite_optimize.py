@@ -29,6 +29,7 @@ from hardware_capture.optimization.core import (
     robustness_objective,
 )
 from hardware_capture.optimization.history import write_loss_curve
+from hardware_capture.optimization.diagnostics import STEP_FIELDS, step_metrics, write_diagnostics
 from hardware_capture.optimization.pipeline import (
     _history_row,
     _write_history,
@@ -531,6 +532,7 @@ def run_composite(
             accepted=True,
             step_scale=0.0,
             probes=(),
+            parameter_steps=None,
         ):
             evaluation = candidate["evaluation"]
             if kind != "final_verification":
@@ -540,6 +542,15 @@ def run_composite(
                     **_history_row(epoch, evaluation),
                     "kind": kind,
                     "measurement_path": str(candidate["path"]),
+                    "search_loss": candidate["search_loss"],
+                    **(parameter_steps or dict.fromkeys(STEP_FIELDS, math.nan)),
+                    **{
+                        f"spsa_{member}_center_fidelity_min": min(
+                            p["evaluation"].objective.center_fidelity
+                            for sign, p in probes if sign == member)
+                        if probes else math.nan
+                        for member in ("plus", "minus")
+                    },
                     "spsa_plus_loss_mean": float(np.mean(estimate.plus_losses))
                     if estimate
                     else math.nan,
@@ -601,6 +612,8 @@ def run_composite(
             )
             _write_history(directory / "history.csv", history)
             write_loss_curve(history, directory / "loss_curve.png")
+            if acceptance:
+                write_diagnostics(history, directory / "optimizer_diagnostics.png")
             label = f"Epoch {epoch:02d}/{updates:02d}" if kind == "spsa" else kind
             print(f"{label}: loss={evaluation.objective.loss:.9g}", flush=True)
 
@@ -612,7 +625,8 @@ def run_composite(
             raise ValueError(
                 "Initial pulse fails the ideal-condition fidelity floor; optimization not started"
             )
-        record(current, 0, "initial")
+        record(current, 0, "initial", parameter_steps=step_metrics(
+            np.r_[logits, phase], np.r_[logits, phase], np.r_[logits, phase]))
         for epoch in range(1, updates + 1):
             candidates = []
             probes = []
@@ -729,6 +743,8 @@ def run_composite(
                     accepted=accepted,
                     step_scale=step_scale,
                     probes=probes,
+                    parameter_steps=step_metrics(
+                        center, np.r_[proposed_logits, proposed_phase], np.r_[logits, phase]),
                 )
             else:
                 logits, phase = proposed_logits, proposed_phase
@@ -837,6 +853,7 @@ def run_composite(
             ),
             "loss_history_path": str(directory / "history.csv"),
             "loss_curve_path": str(directory / "loss_curve.png"),
+            **({"optimizer_diagnostics_path": str(directory / "optimizer_diagnostics.png")} if acceptance else {}),
         }
         write_json(directory / "summary.json", result)
         complete = True

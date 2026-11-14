@@ -14,6 +14,7 @@ import numpy as np
 FIELDS = {
     "spsa": {"directions", "seed", "amplitude_logit_perturbation", "phase_perturbation_rad", "perturbation_decay"},
     "composite": {
+        "capture_retention",
         "sequence_path",
         "parameter_source",
         "parameter_overrides",

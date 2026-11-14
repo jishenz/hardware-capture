@@ -17,6 +17,7 @@
     "perturbation_decay": 0.101
   },
   "composite": {
+    "capture_retention": "selected",
     "minimum_center_fidelity": 0.99,
     "center_penalty_weight": 10.0,
     "maximum_backtracks": 3,

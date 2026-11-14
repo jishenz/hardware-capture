@@ -81,3 +81,69 @@ def test_keyboard_interrupt_records_interrupted_stage(tmp_path):
     assert (
         json.loads((tmp_path / "progress.json").read_text())["status"] == "interrupted"
     )
+
+
+def test_compact_stage_keeps_progress_and_exception_without_candidate_file(tmp_path):
+    with pytest.raises(OSError), measure_stage(
+        tmp_path, "probe", {}, "objective", candidate_timing=False
+    ):
+        raise OSError(28, "No space left on device")
+    assert not (tmp_path / "probe_timing.json").exists()
+    progress = json.loads((tmp_path / "progress.json").read_text())
+    assert progress["status"] == "failed"
+    assert progress["error_type"] == "OSError"
+    assert "No space left" in progress["error"]
+
+
+def test_checkpoint_write_failure_preserves_previous_archive(tmp_path, monkeypatch):
+    from hardware_capture.optimization.retention import atomic_npz
+
+    path = tmp_path / "checkpoint_latest.npz"
+    atomic_npz(path, next_epoch=3)
+    previous = path.read_bytes()
+
+    def fail(stream, **arrays):
+        stream.write(b"incomplete archive")
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(np, "savez_compressed", fail)
+    with pytest.raises(OSError, match="No space left"):
+        atomic_npz(path, next_epoch=4)
+    assert path.read_bytes() == previous
+    assert not (tmp_path / "checkpoint_latest.npz.tmp").exists()
+    with np.load(path, allow_pickle=False) as saved:
+        assert saved["next_epoch"] == 3
+
+
+def test_evidence_write_failure_preserves_original_processing_error(tmp_path, monkeypatch):
+    from hardware_capture.optimization.retention import CaptureRecorder
+
+    recorder = CaptureRecorder(tmp_path, {})
+
+    def full_disk(*args, **kwargs):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(recorder, "save_raw", full_disk)
+    with pytest.raises(ValueError, match="bad calibration"), recorder.capture("probe", {}) as candidate:
+        candidate["raw"] = object()
+        raise ValueError("bad calibration")
+    event = json.loads((tmp_path / "captures.jsonl").read_text())
+    assert event["error_type"] == "ValueError"
+    assert event["error"] == "bad calibration"
+    assert "No space left" in event["evidence_error"]
+    assert "ValueError: bad calibration" in event["traceback"]
+
+
+def test_progress_write_failure_does_not_mask_processing_error(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    def full_disk(*args, **kwargs):
+        raise OSError(28, "No space left on device")
+
+    with (
+        pytest.raises(ValueError, match="bad calibration") as failure,
+        measure_stage(tmp_path, "probe", {}, "calibration", candidate_timing=False),
+    ):
+        monkeypatch.setattr(Path, "write_text", full_disk)
+        raise ValueError("bad calibration")
+    assert any("Could not persist stage failure" in note for note in failure.value.__notes__)

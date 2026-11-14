@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import csv
 import math
 import time
+import traceback
 from dataclasses import asdict
 from pathlib import Path
 
@@ -11,7 +13,11 @@ import numpy as np
 from scipy.optimize import lsq_linear
 
 from hardware_capture.configuration import Experiment
-from hardware_capture.devices.rigol import RigolDHO, WaveformCaptureConfig, normalize_waveform_format
+from hardware_capture.devices.rigol import (
+    RigolDHO,
+    WaveformCaptureConfig,
+    normalize_waveform_format,
+)
 from hardware_capture.devices.tnmr import TNMRControl
 from hardware_capture.optimization.acceptance import FidelityAcceptance
 from hardware_capture.optimization.amplitude import amplitude_logits, sigmoid_amplitude
@@ -28,15 +34,25 @@ from hardware_capture.optimization.core import (
     command_tables,
     robustness_objective,
 )
+from hardware_capture.optimization.diagnostics import (
+    STEP_FIELDS,
+    step_metrics,
+    write_diagnostics,
+)
 from hardware_capture.optimization.history import write_loss_curve
-from hardware_capture.optimization.diagnostics import STEP_FIELDS, step_metrics, write_diagnostics
 from hardware_capture.optimization.pipeline import (
     _history_row,
     _write_history,
     parse_numeric_table,
     upload_tables_with_readback,
 )
-from hardware_capture.optimization.recording import measure_stage, save_raw_capture
+from hardware_capture.optimization.recording import measure_stage
+from hardware_capture.optimization.retention import (
+    CaptureRecorder,
+    atomic_npz,
+    capture_retention,
+    release_waveforms,
+)
 from hardware_capture.optimization.spsa import SPSAConfig, estimate_spsa
 from hardware_capture.pulses.conditions import Pulse, generate
 from hardware_capture.signal.demodulation import demodulate_raw_rf
@@ -49,6 +65,7 @@ def prepare(config: Experiment):
     """Resolve saved sequence timing and validate without constructing devices."""
     tnmr = config.section("tnmr")
     options = config.section("composite")
+    capture_retention(options)
     sequence_path = Path(options.get("sequence_path", config.require("tnmr", "path")))
     schedule = schedule_from_sequence(
         load_sequence_file(sequence_path),
@@ -273,6 +290,7 @@ def run_composite(
     scope_options = effective.section("scope")
     demod = effective.section("demodulation")
     reduction_options = effective.section("composite")
+    recorder = CaptureRecorder(directory, reduction_options)
     acceptance = FidelityAcceptance.from_options(reduction_options)
     spsa = SPSAConfig(**effective.section("spsa"))
     spsa.validate()
@@ -377,99 +395,95 @@ def run_composite(
 
             def stage(name):
                 return measure_stage(
-                    directory, label, timings, name, description=display
+                    directory, label, timings, name, description=display,
+                    candidate_timing=not recorder.selected,
                 )
 
-            with stage("preflight"):
-                _wait_idle(tnmr, scope_options)
-                _verify_parameters(tnmr, schedule)
-            candidate_logits, candidate_phase = np.split(parameters, 2)
-            candidate_amplitude, _ = sigmoid_amplitude(candidate_logits, maximum)
-            percent, _, command_phase = command_tables(
-                candidate_amplitude, candidate_phase, spline
-            )
-            command_phase = command_phase + phase_baseline
-            degrees = np.mod(np.rad2deg(command_phase), 360)
-            modified = True
-            with stage("upload_and_readback"):
-                upload_tables_with_readback(
-                    tnmr,
-                    amplitude_table_name=controls["amplitude_table"],
-                    phase_table_name=controls["phase_table"],
-                    amplitude_percent=percent,
-                    phase_degrees=degrees,
+            with recorder.capture(label, timings) as candidate:
+                with stage("preflight"):
+                    _wait_idle(tnmr, scope_options)
+                    _verify_parameters(tnmr, schedule)
+                candidate_logits, candidate_phase = np.split(parameters, 2)
+                candidate_amplitude, _ = sigmoid_amplitude(candidate_logits, maximum)
+                percent, _, command_phase = command_tables(
+                    candidate_amplitude, candidate_phase, spline
                 )
-            with stage("acquire_and_transfer"):
-                raw = scope.capture_single_waveform(
-                    WaveformCaptureConfig(
-                        channel=scope_options.get("channel", "CHAN1"),
-                        waveform_format=scope_options.get("waveform_format", "WORD"),
-                        window_start_s=scope_options.get("window_start_s", -10e-6),
-                        window_end_s=scope_options.get("window_end_s", 100e-6),
-                        allow_clamp=False,
-                    ),
-                    start_shot=tnmr.zero_and_go,
-                    confirm_armed=True,
-                    rearm_after_read=False,
-                    trigger_timeout_s=scope_options.get("trigger_timeout_s", 30),
-                    armed_timeout_s=scope_options.get("armed_timeout_s", 2),
-                    poll_s=scope_options.get("poll_s", 0.05),
+                command_phase = command_phase + phase_baseline
+                degrees = np.mod(np.rad2deg(command_phase), 360)
+                modified = True
+                with stage("upload_and_readback"):
+                    upload_tables_with_readback(
+                        tnmr,
+                        amplitude_table_name=controls["amplitude_table"],
+                        phase_table_name=controls["phase_table"],
+                        amplitude_percent=percent,
+                        phase_degrees=degrees,
+                    )
+                with stage("acquire_and_transfer"):
+                    raw = scope.capture_single_waveform(
+                        WaveformCaptureConfig(
+                            channel=scope_options.get("channel", "CHAN1"),
+                            waveform_format=scope_options.get("waveform_format", "WORD"),
+                            window_start_s=scope_options.get("window_start_s", -10e-6),
+                            window_end_s=scope_options.get("window_end_s", 100e-6),
+                            allow_clamp=False,
+                        ),
+                        start_shot=tnmr.zero_and_go,
+                        confirm_armed=True,
+                        rearm_after_read=False,
+                        trigger_timeout_s=scope_options.get("trigger_timeout_s", 30),
+                        armed_timeout_s=scope_options.get("armed_timeout_s", 2),
+                        poll_s=scope_options.get("poll_s", 0.05),
+                    )
+                candidate["raw"] = raw
+                if not recorder.selected:
+                    with stage("save_raw"):
+                        recorder.save_raw(label, raw)
+                with stage("wait_complete"):
+                    _wait_idle(tnmr, scope_options)
+                with stage("demodulation"):
+                    measured = demodulate_raw_rf(
+                        raw,
+                        demodulation_freq_hz=demod["frequency_hz"],
+                        baseband_cutoff_hz=demod.get("cutoff_hz", 25e6),
+                        filter_order=demod.get("filter_order", 4),
+                        q_sign=demod.get("q_sign", -1),
+                    )
+                with stage("calibration"):
+                    reduced = reduce_composite(
+                        measured,
+                        schedule,
+                        samples=entries,
+                        reference_rabi_hz=reference,
+                        **{
+                            key: reduction_options[key]
+                            for key in (
+                                "alignment_search_s",
+                                "capture_reference_start_s",
+                                "middle_fraction",
+                                "minimum_coherence",
+                                "maximum_relative_spread",
+                            )
+                            if key in reduction_options
+                        },
+                    )
+                with stage("objective"):
+                    normalized = reduced.mean_iq_rad_s / omega_100
+                    evaluation = robustness_objective(
+                        normalized.real, normalized.imag, dt, robustness
+                    )
+                if not math.isfinite(evaluation.objective.loss):
+                    raise ValueError("Measured composite loss is not finite")
+                search_loss = (
+                    acceptance.search_loss(
+                        evaluation.objective.loss, evaluation.objective.center_fidelity
+                    )
+                    if acceptance
+                    else evaluation.objective.loss
                 )
-            # Retain raw evidence even if completion, calibration, or loss fails.
-            with stage("save_raw"):
-                save_raw_capture(
-                    directory / f"{label}_raw.npz",
-                    time_s=raw.time,
-                    voltage_v=raw.voltage,
-                    sample_rate_hz=raw.sample_rate,
-                )
-            with stage("wait_complete"):
-                _wait_idle(tnmr, scope_options)
-            with stage("demodulation"):
-                measured = demodulate_raw_rf(
-                    raw,
-                    demodulation_freq_hz=demod["frequency_hz"],
-                    baseband_cutoff_hz=demod.get("cutoff_hz", 25e6),
-                    filter_order=demod.get("filter_order", 4),
-                    q_sign=demod.get("q_sign", -1),
-                )
-            with stage("calibration"):
-                reduced = reduce_composite(
-                    measured,
-                    schedule,
-                    samples=entries,
-                    reference_rabi_hz=reference,
-                    **{
-                        key: reduction_options[key]
-                        for key in (
-                            "alignment_search_s",
-                            "capture_reference_start_s",
-                            "middle_fraction",
-                            "minimum_coherence",
-                            "maximum_relative_spread",
-                        )
-                        if key in reduction_options
-                    },
-                )
-            with stage("objective"):
-                normalized = reduced.mean_iq_rad_s / omega_100
-                evaluation = robustness_objective(
-                    normalized.real, normalized.imag, dt, robustness
-                )
-            if not math.isfinite(evaluation.objective.loss):
-                raise ValueError("Measured composite loss is not finite")
-            search_loss = (
-                acceptance.search_loss(
-                    evaluation.objective.loss, evaluation.objective.center_fidelity
-                )
-                if acceptance
-                else evaluation.objective.loss
-            )
-            path = directory / f"{label}.npz"
-            with stage("save_reduced"):
-                np.savez_compressed(
-                    path,
-                    **asdict(reduced),
+                candidate["archive"] = dict(
+                    measurement_id=label,
+                    **vars(reduced),
                     amplitude_coefficients=candidate_amplitude,
                     amplitude_logits=candidate_logits,
                     amplitude_maximum=maximum,
@@ -486,14 +500,15 @@ def run_composite(
                     amplitude_errors=robustness.amplitude_errors,
                     detuning_hz=robustness.detuning_ratios * reference,
                 )
-            return {
-                "parameters": parameters.copy(),
-                "path": path,
-                "evaluation": evaluation,
-                "search_loss": search_loss,
-                "percent": percent,
-                "command_phase": command_phase,
-            }
+                if not recorder.selected:
+                    with stage("save_reduced"):
+                        candidate["path"] = recorder.save(candidate, label, raw=False)
+                candidate.update(
+                    parameters=parameters.copy(), evaluation=evaluation,
+                    search_loss=search_loss, percent=percent,
+                    command_phase=command_phase,
+                )
+                return candidate
 
         amplitude_state = phase_state = None
         if acceptance:
@@ -515,13 +530,14 @@ def run_composite(
                 or evaluation.objective.loss < best["evaluation"].objective.loss
             ):
                 best, best_epoch = candidate, epoch
-                _heatmap(
-                    directory / "best_heatmap.png",
-                    evaluation,
-                    robustness,
-                    reference,
-                    title=f"Mean of {schedule.repetitions} calibrated targets, epoch {epoch}",
-                )
+                if not recorder.selected:
+                    _heatmap(
+                        directory / "best_heatmap.png",
+                        evaluation,
+                        robustness,
+                        reference,
+                        title=f"Mean of {schedule.repetitions} calibrated targets, epoch {epoch}",
+                    )
 
         def record(
             candidate,
@@ -541,7 +557,8 @@ def run_composite(
                 {
                     **_history_row(epoch, evaluation),
                     "kind": kind,
-                    "measurement_path": str(candidate["path"]),
+                    "measurement_id": candidate["measurement_id"],
+                    "measurement_path": str(candidate["path"] or ""),
                     "search_loss": candidate["search_loss"],
                     **(parameter_steps or dict.fromkeys(STEP_FIELDS, math.nan)),
                     **{
@@ -610,10 +627,26 @@ def run_composite(
                     ),
                 }
             )
-            _write_history(directory / "history.csv", history)
-            write_loss_curve(history, directory / "loss_curve.png")
-            if acceptance:
-                write_diagnostics(history, directory / "optimizer_diagnostics.png")
+            if recorder.selected:
+                path = directory / "history.csv"
+                header = not path.exists()
+                with path.open("a", newline="", encoding="utf-8") as stream:
+                    writer = csv.DictWriter(stream, fieldnames=list(history[0]))
+                    if header:
+                        writer.writeheader()
+                    writer.writerow(history[-1])
+            else:
+                _write_history(directory / "history.csv", history)
+            if not recorder.selected or epoch % 25 == 0 or kind == "final_verification":
+                write_loss_curve(history, directory / "loss_curve.png")
+                if acceptance:
+                    write_diagnostics(history, directory / "optimizer_diagnostics.png")
+                if recorder.selected:
+                    _heatmap(
+                        directory / "best_heatmap.png", best["evaluation"],
+                        robustness, reference,
+                        title=f"Mean of {schedule.repetitions} calibrated targets, epoch {best_epoch}",
+                    )
             label = f"Epoch {epoch:02d}/{updates:02d}" if kind == "spsa" else kind
             print(f"{label}: loss={evaluation.objective.loss:.9g}", flush=True)
 
@@ -627,9 +660,14 @@ def run_composite(
             )
         record(current, 0, "initial", parameter_steps=step_metrics(
             np.r_[logits, phase], np.r_[logits, phase], np.r_[logits, phase]))
+        best_path = recorder.keep_best(best)
+        if acceptance:
+            center_path = recorder.keep_center(current)
+        release_waveforms(current)
         for epoch in range(1, updates + 1):
             candidates = []
             probes = []
+            probe_evidence = None
 
             def probe(
                 parameters,
@@ -640,6 +678,7 @@ def run_composite(
                 candidates=candidates,
                 probes=probes,
             ):
+                nonlocal probe_evidence
                 candidate = measure(
                     parameters,
                     f"epoch_{epoch:04d}_direction_{direction:03d}_{member}",
@@ -647,6 +686,20 @@ def run_composite(
                 )
                 candidates.append(candidate)
                 probes.append((member, candidate))
+                if recorder.selected:
+                    eligible = not acceptance or acceptance.accepts(
+                        candidate["evaluation"].objective.center_fidelity
+                    )
+                    loss = candidate["evaluation"].objective.loss
+                    if (
+                        eligible and loss < best["evaluation"].objective.loss
+                        and (probe_evidence is None or loss < probe_evidence["evaluation"].objective.loss)
+                    ):
+                        if probe_evidence is not None:
+                            release_waveforms(probe_evidence)
+                        probe_evidence = candidate
+                    else:
+                        release_waveforms(candidate)
                 return candidate["search_loss"]
 
             estimate = estimate_spsa(
@@ -654,9 +707,10 @@ def run_composite(
             )
             # Only a complete set of valid pairs can reach Adam or a checkpoint.
             spsa_path = directory / f"epoch_{epoch:04d}_spsa.npz"
-            np.savez_compressed(
-                spsa_path, **asdict(estimate), center_parameters=np.r_[logits, phase]
-            )
+            if not recorder.selected:
+                atomic_npz(
+                    spsa_path, **asdict(estimate), center_parameters=np.r_[logits, phase]
+                )
             selected = min(
                 candidates, key=lambda item: item["evaluation"].objective.loss
             )
@@ -698,7 +752,8 @@ def run_composite(
                     )
                     attempts.append(
                         {
-                            "measurement_path": str(trial["path"]),
+                            "measurement_id": trial["measurement_id"],
+                            "measurement_path": str(trial["path"] or ""),
                             "center_fidelity": trial[
                                 "evaluation"
                             ].objective.center_fidelity,
@@ -714,6 +769,7 @@ def run_composite(
                             proposed_phase_state,
                         )
                         break
+                    release_waveforms(trial)
                 if not accepted:
                     # Reject both parameter and Adam-state changes. Leave hardware
                     # at the last accepted command, not the last failed trial.
@@ -726,15 +782,18 @@ def run_composite(
                         amplitude_percent=current["percent"],
                         phase_degrees=np.mod(np.rad2deg(current["command_phase"]), 360),
                     )
-                write_json(
-                    directory / f"epoch_{epoch:04d}_acceptance.json",
-                    {
-                        "minimum_center_fidelity": acceptance.minimum_center_fidelity,
-                        "accepted": accepted,
-                        "attempts": attempts,
-                        "retained_measurement_path": str(current["path"]),
-                    },
-                )
+                decision = {
+                    "epoch": epoch,
+                    "minimum_center_fidelity": acceptance.minimum_center_fidelity,
+                    "accepted": accepted,
+                    "attempts": attempts,
+                    "retained_measurement_id": current["measurement_id"],
+                    "retained_measurement_path": str(current["path"] or ""),
+                }
+                if recorder.selected:
+                    recorder.append_event(decision, "acceptance.jsonl")
+                else:
+                    write_json(directory / f"epoch_{epoch:04d}_acceptance.json", decision)
                 record(
                     current,
                     epoch,
@@ -753,7 +812,10 @@ def run_composite(
                     proposed_phase_state,
                 )
             amplitude, _ = sigmoid_amplitude(logits, maximum)
-            np.savez_compressed(
+            best_path = recorder.keep_best(best)
+            if acceptance:
+                center_path = recorder.keep_center(current)
+            atomic_npz(
                 directory / "checkpoint_latest.npz",
                 next_epoch=epoch + 1,
                 amplitude_coefficients=amplitude,
@@ -762,7 +824,9 @@ def run_composite(
                 amplitude_parameterization="sigmoid",
                 gradient_method="spsa",
                 spsa_seed=spsa.seed,
-                last_spsa_path=str(spsa_path),
+                last_spsa_path="" if recorder.selected else str(spsa_path),
+                last_spsa_gradient=estimate.gradient,
+                capture_retention=recorder.mode,
                 phase_coefficients_rad=phase,
                 phase_baseline_rad=phase_baseline,
                 amplitude_logit_first=amplitude_state.first_moment,
@@ -773,7 +837,8 @@ def run_composite(
                 center_is_measured=acceptance is not None,
                 **(
                     {
-                        "center_measurement_path": str(current["path"]),
+                        "center_measurement_path": str(center_path),
+                        "center_measurement_id": current["measurement_id"],
                         "center_fidelity": current[
                             "evaluation"
                         ].objective.center_fidelity,
@@ -784,8 +849,12 @@ def run_composite(
                     else {}
                 ),
                 best_epoch=best_epoch,
-                best_measurement_path=str(best["path"]),
+                best_measurement_path=str(best_path),
+                best_measurement_id=best["measurement_id"],
+                best_parameters=best["parameters"],
             )
+            for candidate in [*candidates, current, best]:
+                release_waveforms(candidate)
         # Restore and independently measure the best actual candidate, not the
         # unmeasured Adam center or an average of the +/- command parameters.
         verifications = []
@@ -823,7 +892,9 @@ def run_composite(
         result = {
             "best_epoch": best_epoch,
             "best_loss": best["evaluation"].objective.loss,
-            "best_measurement_path": str(best["path"]),
+            "best_measurement_path": str(best_path),
+            "best_measurement_id": best["measurement_id"],
+            "capture_retention": recorder.mode,
             "final_verification_loss": final["evaluation"].objective.loss,
             "final_verification_path": str(final["path"]),
             "pulse_path": artifacts["pulse_path"],
@@ -862,6 +933,15 @@ def run_composite(
             flush=True,
         )
         return result
+    except BaseException as exc:
+        try:
+            recorder.append_event({
+                "error_type": type(exc).__name__, "error": str(exc),
+                "traceback": traceback.format_exc(), "physical_state": "unverified",
+            }, "run_errors.jsonl")
+        except Exception as recording_error:  # noqa: BLE001 - preserve the primary failure
+            exc.add_note(f"Could not persist run failure: {recording_error}")
+        raise
     finally:
         if not complete and modified:
             try:

@@ -57,6 +57,7 @@ def preview(config: Experiment) -> dict:
             "directory", str(ROOT / "outputs")
         ),
         "loss_outputs": ["history.csv", "loss_curve.png"],
+        "capture_retention": config.section("composite").get("capture_retention", "selected"),
     }
 
 

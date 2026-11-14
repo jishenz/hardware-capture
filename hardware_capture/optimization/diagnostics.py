@@ -99,7 +99,8 @@ def saved_diagnostics(directory, output_directory=None):
     weight = composite.get("center_penalty_weight", 10.0) if "minimum_center_fidelity" in composite else None
     missing = []
     for row in rows:
-        row.update({key: np.nan for key in STEP_FIELDS})
+        for key in STEP_FIELDS:
+            row.setdefault(key, np.nan)
         row.setdefault("search_loss", np.nan)
         for member in ("plus", "minus"):
             fidelities = []
@@ -117,6 +118,9 @@ def saved_diagnostics(directory, output_directory=None):
         if row.get("kind") == "initial":
             row.update(dict.fromkeys(STEP_FIELDS, 0.0))
         if row.get("kind") not in {"accepted_center", "retained_center"}:
+            continue
+        # Selected retention records these metrics directly, without probe archives.
+        if all(np.isfinite(float(row[key])) for key in STEP_FIELDS):
             continue
         epoch = int(row["epoch"])
         # Split both separators so archived Windows paths also work on Unix.

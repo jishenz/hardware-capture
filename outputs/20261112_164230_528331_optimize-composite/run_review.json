@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "record_type": "post_run_review",
+  "run_id": "20261112_164230_528331_optimize-composite",
+  "status": "interrupted_recording_failure",
+  "planned_updates": 4000,
+  "completed_updates": 852,
+  "accepted_updates": 849,
+  "checkpoint_next_epoch": 853,
+  "checkpoint_adam_step": 849,
+  "initial": {
+    "loss": 0.5384767447228644,
+    "center_fidelity": 0.9957792272157694
+  },
+  "best_eligible_candidate": {
+    "epoch": 723,
+    "kind": "spsa_probe",
+    "measurement_file": "epoch_0723_direction_001_plus.npz",
+    "loss": 0.4141327209410326,
+    "center_fidelity": 0.9934504441534755,
+    "mean_scan_fidelity": 0.6805807264010834,
+    "worst_scan_fidelity": 0.00016522797788379905,
+    "relative_loss_reduction_from_initial": 0.2309180944217516,
+    "independently_verified": false
+  },
+  "last_completed_center": {
+    "epoch": 852,
+    "loss": 0.4352009140280661,
+    "center_fidelity": 0.991043409194088
+  },
+  "failure": {
+    "candidate": "epoch_0853_direction_001_minus",
+    "description": "Epoch 853/4000, direction 2/2, minus probe | capture 4293/32004 maximum",
+    "stage": "save_raw",
+    "status": "failed",
+    "updated_at_utc": "2026-11-13T06:01:48.337472+00:00",
+    "updated_at_central": "2026-11-13T00:01:48-06:00",
+    "diagnosis": "Raw archive saving failed. Disk exhaustion is suspected, but the original exception was not preserved.",
+    "acquisition_and_transfer_recorded_complete": true
+  },
+  "final_verification_completed": false,
+  "physical_state": "unverified",
+  "automatic_resume_supported": false,
+  "configuration": {
+    "pulse": {
+      "kind": "bb1",
+      "duration_s": 5.9999999999999995e-05,
+      "samples": 6000,
+      "angle_deg": 180,
+      "axis_phase_deg": 0,
+      "max_rabi_hz": 160000
+    },
+    "reference_rabi_hz": 160000,
+    "optimization": {
+      "coefficients": 125,
+      "updates": 4000,
+      "phase_learning_rate": 0.04,
+      "phase_step_rad": 0.1
+    },
+    "spsa": {
+      "directions": 2,
+      "seed": 20260820,
+      "amplitude_logit_perturbation": 0.08,
+      "phase_perturbation_rad": 0.05,
+      "perturbation_decay": 0.101
+    },
+    "composite": {
+      "minimum_center_fidelity": 0.99,
+      "center_penalty_weight": 10.0,
+      "maximum_backtracks": 3,
+      "verification_captures": 3,
+      "parameter_source": "value",
+      "seed": "configured",
+      "amplitude_logit_learning_rate": 0.04,
+      "amplitude_logit_step": 0.04,
+      "alignment_search_s": 1e-06,
+      "capture_reference_start_s": 0.0,
+      "capture_window": "sequence",
+      "capture_pre_margin_s": 1e-05,
+      "capture_post_margin_s": 2e-05,
+      "middle_fraction": 0.6,
+      "minimum_coherence": 0.9,
+      "maximum_relative_spread": 0.2
+    },
+    "demodulation": {
+      "frequency_hz": 601010011.3,
+      "cutoff_hz": 25000000,
+      "filter_order": 4,
+      "q_sign": -1
+    },
+    "scan": {
+      "amplitude_errors": [
+        -0.5,
+        -0.45,
+        -0.4,
+        -0.35,
+        -0.3,
+        -0.25,
+        -0.19999999999999996,
+        -0.14999999999999997,
+        -0.09999999999999998,
+        -0.04999999999999999,
+        0.0,
+        0.050000000000000044,
+        0.10000000000000009,
+        0.15000000000000002,
+        0.20000000000000007,
+        0.25,
+        0.30000000000000004,
+        0.3500000000000001,
+        0.4,
+        0.45000000000000007,
+        0.5
+      ],
+      "detuning_hz": [
+        -62500.0,
+        -56250.0,
+        -50000.0,
+        -43750.0,
+        -37500.0,
+        -31250.0,
+        -25000.0,
+        -18750.0,
+        -12500.0,
+        -6250.0,
+        0.0,
+        6250.0,
+        12500.0,
+        18750.0,
+        25000.0,
+        31250.0,
+        37500.0,
+        43750.0,
+        50000.0,
+        56250.0,
+        62500.0
+      ]
+    },
+    "retention_during_this_run": "all"
+  },
+  "artifacts": {
+    "history.csv": {
+      "bytes": 456508,
+      "sha256": "0646f0dfa878dbb624b8f34e46034268a646918f1582b28528a7645e46d3095c"
+    },
+    "loss_curve.png": {
+      "bytes": 197983,
+      "sha256": "dddebf98c831406bf966c53fe164c9bcf122bf9e298b32fbc7fe21f8853a6af4"
+    },
+    "best_heatmap.png": {
+      "bytes": 41180,
+      "sha256": "d2d2fa08a7372593ba8711a0482b4032e751722c514e566a683bf0fe5b1b1215"
+    },
+    "optimizer_diagnostics.png": {
+      "bytes": 594631,
+      "sha256": "0889a5b0f159e73e4058d21e3d2148989a6fe1ddd64907e75cbcb2f6bf6308b2"
+    },
+    "epoch_0723_direction_001_plus.npz": {
+      "bytes": 843130,
+      "sha256": "fa2fb58c3191cc94400bcf9e39654f0a87ec7f58b71444ec36f344a6232c4eca"
+    },
+    "checkpoint_latest.npz": {
+      "bytes": 12249,
+      "sha256": "73126c8bbd67f14864d226ece1edb72e3cc5c3afab48ee984591f8c9641d6e42"
+    }
+  },
+  "notes": [
+    "Fidelities are computed from captured RF and the spin model, not directly measured spin-gate fidelities.",
+    "The best candidate is a passing SPSA probe, not the final accepted center.",
+    "The robustness grid includes points below 99%; passing the nominal center floor does not imply a 99% robust gate.",
+    "Absolute measurement paths in the original history/checkpoint reference untracked local captures; only the selected best reduced archive is included.",
+    "No raw RF records, device connection configuration, or original TNMR tables are included in this curated snapshot.",
+    "This review does not establish successful completion or authorize hardware playback."
+  ]
+}

@@ -21,6 +21,15 @@ from hardware_capture.workflows import composite_optimize as workflow
 pytestmark = pytest.mark.unit
 
 
+@pytest.fixture(autouse=True)
+def forbid_real_devices(monkeypatch):
+    def forbidden(*args, **kwargs):
+        pytest.fail("Offline tests must use explicitly supplied fake devices")
+
+    monkeypatch.setattr(workflow, "TNMRControl", forbidden)
+    monkeypatch.setattr(workflow, "RigolDHO", forbidden)
+
+
 def schedule(repetitions=20):
     return CompositeSchedule(
         repetitions,
@@ -316,6 +325,7 @@ def config_for_test():
             "tnmr": {"amplitude_table": "amp", "phase_table": "phase"},
             "scope": {"resource": "FAKE", "window_end_s": 0.001},
             "demodulation": {"frequency_hz": 1e6},
+            "composite": {"capture_retention": "all"},
             "scan": {"amplitude_errors": [0.0], "detuning_hz": [0.0]},
         }
     )
@@ -547,6 +557,7 @@ def test_public_preview_resolves_timing_without_devices(monkeypatch):
     )
     result = run("optimize-composite", config)
     assert result["dry_run"]
+    assert result["plan"]["capture_retention"] == "all"
     plan = result["plan"]["composite_schedule"]
     assert plan["repetitions"] == 6
     assert plan["parameter_source"] == "value"
@@ -770,11 +781,14 @@ def test_legacy_amplitude_step_units_not_silently_reinterpreted(monkeypatch):
 
 
 @pytest.mark.parametrize("failed_capture,completed_updates", [(3, 0), (5, 1)])
+@pytest.mark.parametrize("retention", ["all", "selected"])
 def test_failed_probe_preserves_last_complete_checkpoint(
-    tmp_path, monkeypatch, failed_capture, completed_updates
+    tmp_path, monkeypatch, failed_capture, completed_updates, retention
 ):
     plan = schedule(3)
-    config = config_for_test().with_updates(optimization={"updates": 2})
+    config = config_for_test().with_updates(
+        optimization={"updates": 2}, composite={"capture_retention": retention}
+    )
     tnmr = FakeTNMR()
     original = dict(tnmr.tables)
     monkeypatch.setattr(workflow, "prepare", lambda config: (config, plan))
@@ -810,9 +824,20 @@ def test_failed_probe_preserves_last_complete_checkpoint(
             assert state["adam_step"] == completed_updates
     failed_epoch = completed_updates + 1
     failed_member = "minus" if completed_updates == 0 else "plus"
-    assert (
-        tmp_path / f"epoch_{failed_epoch:04d}_direction_000_{failed_member}_raw.npz"
-    ).exists()
+    failed_path = (
+        "failed_capture_raw.npz" if retention == "selected"
+        else f"epoch_{failed_epoch:04d}_direction_000_{failed_member}_raw.npz"
+    )
+    with np.load(tmp_path / failed_path, allow_pickle=False) as saved:
+        assert not np.any(saved["voltage_v"])
+    if retention == "selected":
+        import json
+
+        events = [json.loads(line) for line in (tmp_path / "captures.jsonl").read_text().splitlines()]
+        assert events[-1]["status"] == "failed"
+        assert events[-1]["error_type"] == "ValueError"
+        assert "square reference" in events[-1]["error"]
+        assert events[-1]["timings"]["calibration"]["status"] == "failed"
     assert not (tmp_path / f"epoch_{failed_epoch:04d}_spsa.npz").exists()
     assert tnmr.tables == original
 
@@ -989,6 +1014,193 @@ def scripted_acceptance_run(monkeypatch, values, *, updates=1):
 
     monkeypatch.setattr(workflow, "robustness_objective", evaluate)
     return config, tnmr, FakeScope(tnmr, plan)
+
+
+def test_selected_retention_matches_full_recording_without_routine_writes(
+    tmp_path, monkeypatch
+):
+    import csv
+    import json
+
+    from hardware_capture.optimization.retention import CaptureRecorder
+
+    # A passing probe wins; one center backtracks, then an update is rejected.
+    outcomes = [
+        (0.5, 0.995),
+        (0.1, 0.95), (0.3, 0.995), (0.2, 0.98), (0.4, 0.995),
+        (0.25, 0.995), (0.2, 0.98), *[(0.1, 0.98)] * 4,
+        *[(0.25, 0.995)] * 3,
+    ]
+    runs = {}
+    raw_writes = []
+    real_save_raw = CaptureRecorder.save_raw
+
+    for mode in ("all", "selected"):
+        directory = tmp_path / mode
+        directory.mkdir()
+        with monkeypatch.context() as patch:
+            config, tnmr, scope = scripted_acceptance_run(patch, outcomes, updates=2)
+            config = config.with_updates(composite={"capture_retention": mode})
+
+            def save_raw(self, label, raw, *, retention=mode):
+                raw_writes.append((retention, label))
+                return real_save_raw(self, label, raw)
+
+            patch.setattr(CaptureRecorder, "save_raw", save_raw)
+            # Processing must never depend on reading a saved archive.
+            patch.setattr(np, "load", lambda *a, **k: pytest.fail("Archive reloaded during optimization"))
+            result = workflow.run_composite(config, directory, tnmr=tnmr, scope=scope)
+        with (directory / "history.csv").open(newline="") as stream:
+            history = list(csv.DictReader(stream))
+        with np.load(directory / "checkpoint_latest.npz", allow_pickle=False) as checkpoint:
+            state = {key: checkpoint[key].copy() for key in checkpoint.files}
+        runs[mode] = result, history, state
+
+    full, selected = runs["all"], runs["selected"]
+    assert selected[0]["candidate_evaluations"] == full[0]["candidate_evaluations"] == 14
+    assert selected[0]["best_loss"] == full[0]["best_loss"] == 0.25
+    for before, after in zip(full[1], selected[1], strict=True):
+        assert {k: v for k, v in before.items() if k != "measurement_path"} == {
+            k: v for k, v in after.items() if k != "measurement_path"
+        }
+    for key in (
+        "amplitude_logits", "phase_coefficients_rad", "amplitude_logit_first",
+        "amplitude_logit_second", "phase_first", "phase_second", "adam_step",
+        "center_fidelity", "last_spsa_gradient", "best_parameters",
+    ):
+        np.testing.assert_array_equal(full[2][key], selected[2][key])
+    assert selected[2]["adam_step"] == 1
+    assert selected[2]["next_epoch"] == 3
+    directory = tmp_path / "selected"
+    assert {p.name for p in directory.glob("*.npz")} == {
+        "epoch_0000.npz", "epoch_0000_raw.npz", "best_measured_0.npz",
+        "best_measured_0_raw.npz", "best_measured_1.npz", "best_measured_1_raw.npz",
+        "latest_center_0.npz", "checkpoint_latest.npz",
+        "final_verification.npz", "final_verification_raw.npz",
+        "final_verification_002.npz", "final_verification_002_raw.npz",
+        "final_verification_003.npz", "final_verification_003_raw.npz",
+    }
+    assert not list(directory.glob("epoch_*_timing.json"))
+    assert not list(directory.glob("epoch_*_acceptance.json"))
+    assert not any("direction" in label or "trial" in label for mode, label in raw_writes if mode == "selected")
+    with np.load(selected[2]["best_measurement_path"].item(), allow_pickle=False) as best:
+        assert best["measurement_id"] == "epoch_0002_direction_000_minus"
+        assert best["loss"] == 0.25
+    with np.load(selected[2]["center_measurement_path"].item(), allow_pickle=False) as center:
+        assert center["measurement_id"] == "epoch_0001_trial_001"
+        assert center["center_fidelity"] == 0.995
+    events = [json.loads(line) for line in (directory / "captures.jsonl").read_text().splitlines()]
+    assert len(events) == 14
+    assert all(event["status"] == "complete" for event in events)
+    assert all(len(event["calibration"]["reference_amplitude_v"]) == 3 for event in events)
+    decisions = [json.loads(line) for line in (directory / "acceptance.jsonl").read_text().splitlines()]
+    assert [event["accepted"] for event in decisions] == [True, False]
+    assert [attempt["step_scale"] for attempt in decisions[0]["attempts"]] == [1, 0.5]
+    from hardware_capture.optimization.diagnostics import STEP_FIELDS, saved_diagnostics
+
+    report = saved_diagnostics(directory, directory / "diagnostics")
+    assert report["missing_step_epochs"] == []
+    with (directory / "diagnostics/diagnostics.csv").open(newline="") as stream:
+        diagnosed = list(csv.DictReader(stream))
+    for before, after in zip(selected[1], diagnosed, strict=True):
+        for key in STEP_FIELDS:
+            assert after[key] == before[key]
+
+
+@pytest.mark.parametrize("retention", [None, True, "invalid", 1, []])
+def test_invalid_capture_retention_rejected_offline(monkeypatch, retention):
+    config = config_for_test().with_updates(
+        tnmr={"path": "not-opened.tnt"}, composite={"capture_retention": retention}
+    )
+    with pytest.raises(ValueError, match="capture_retention"):
+        workflow.prepare(config)
+
+
+def test_default_retention_is_selected():
+    from hardware_capture.optimization.retention import capture_retention
+
+    assert capture_retention({}) == "selected"
+
+
+def test_selected_seed_only_run_reuses_seed_evidence(tmp_path, monkeypatch):
+    config, tnmr, scope = scripted_acceptance_run(
+        monkeypatch, [(0.5, 0.995)] * 4, updates=0
+    )
+    config = config.with_updates(composite={"capture_retention": "selected"})
+    result = workflow.run_composite(config, tmp_path, tnmr=tnmr, scope=scope)
+    assert result["best_measurement_path"] == str(tmp_path / "epoch_0000.npz")
+    assert not list(tmp_path.glob("best_measured*.npz"))
+    assert not list(tmp_path.glob("latest_center*.npz"))
+    assert len(list(tmp_path.glob("*_raw.npz"))) == 4
+
+
+def test_selected_retention_releases_probe_waveforms_in_ram(tmp_path, monkeypatch):
+    import weakref
+
+    config = config_for_test().with_updates(
+        optimization={"updates": 3}, spsa={"directions": 8},
+        composite={"capture_retention": "selected"},
+    )
+    plan = schedule(3)
+    tnmr = FakeTNMR()
+    monkeypatch.setattr(workflow, "prepare", lambda config: (config, plan))
+    monkeypatch.setattr(workflow, "demodulate_raw_rf", lambda raw, **kwargs: SimpleNamespace(time=raw.time, z=raw.voltage))
+    for name in ("_heatmap", "write_loss_curve", "write_diagnostics"):
+        monkeypatch.setattr(workflow, name, lambda *a, **k: None)
+    references, live_counts = [], []
+
+    class CountingScope(FakeScope):
+        def capture_single_waveform(self, *args, **kwargs):
+            raw = super().capture_single_waveform(*args, **kwargs)
+            references.append(weakref.ref(raw.time))
+            live_counts.append(sum(ref() is not None for ref in references))
+            return raw
+
+    result = workflow.run_composite(config, tmp_path, tnmr=tnmr, scope=CountingScope(tnmr, plan))
+    assert result["candidate_evaluations"] == 50
+    assert max(live_counts) <= 2  # Active capture plus the best eligible probe.
+    assert all(ref() is None for ref in references)
+    assert len(list(tmp_path.glob("*_raw.npz"))) <= 4
+
+
+def test_failed_checkpoint_preserves_previous_state_and_referenced_evidence(
+    tmp_path, monkeypatch
+):
+    import json
+
+    config, tnmr, scope = scripted_acceptance_run(
+        monkeypatch,
+        [(0.5, 0.995), (0.6, 0.995), (0.7, 0.995), (0.4, 0.995),
+         (0.6, 0.995), (0.7, 0.995), (0.3, 0.995)],
+        updates=2,
+    )
+    config = config.with_updates(composite={"capture_retention": "selected"})
+    real_save = workflow.atomic_npz
+    checkpoints = []
+
+    def fail_second_checkpoint(path, **arrays):
+        if path.name == "checkpoint_latest.npz":
+            if checkpoints:
+                raise OSError(28, "No space left on device")
+            real_save(path, **arrays)
+            checkpoints.append(path.read_bytes())
+        else:
+            real_save(path, **arrays)
+
+    monkeypatch.setattr(workflow, "atomic_npz", fail_second_checkpoint)
+    with pytest.raises(OSError, match="No space left"):
+        workflow.run_composite(config, tmp_path, tnmr=tnmr, scope=scope)
+    assert (tmp_path / "checkpoint_latest.npz").read_bytes() == checkpoints[0]
+    with np.load(tmp_path / "checkpoint_latest.npz", allow_pickle=False) as checkpoint:
+        assert checkpoint["next_epoch"] == 2
+        assert checkpoint["adam_step"] == 1
+        for role in ("center", "best"):
+            with np.load(checkpoint[f"{role}_measurement_path"].item(), allow_pickle=False) as evidence:
+                assert evidence["measurement_id"] == checkpoint[f"{role}_measurement_id"]
+                assert evidence["loss"] == 0.4
+    error = json.loads((tmp_path / "run_errors.jsonl").read_text())
+    assert error["error_type"] == "OSError"
+    assert "No space left" in error["error"]
 
 
 def test_fidelity_floor_backtracks_and_excludes_better_infeasible_probe(

@@ -119,6 +119,9 @@ def plan(project: str, config) -> dict:
     elif project == "optimize-composite":
         effective, schedule = composite_optimize.prepare(config)
         details["composite_schedule"] = asdict(schedule)
+        details["capture_retention"] = composite_optimize.capture_retention(
+            effective.section("composite")
+        )
         capture_scope = effective.section("scope")
         details["capture_window"] = {
             "mode": effective.section("composite").get("capture_window", "configured"),

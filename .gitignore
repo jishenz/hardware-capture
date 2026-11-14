@@ -7,20 +7,18 @@ __pycache__/
 build/
 dist/
 results/
-# Keep selected historical summaries and only the two plots from the latest run.
+# Keep only the curated November 12 result evidence; all other runs stay local.
 outputs/*
-!outputs/20261106_192805_162795_optimize-composite/
-outputs/20261106_192805_162795_optimize-composite/*
-!outputs/20261106_192805_162795_optimize-composite/README.md
-!outputs/20261106_192805_162795_optimize-composite/summary.json
-!outputs/20261106_192805_162795_optimize-composite/history.csv
-!outputs/20261106_192805_162795_optimize-composite/loss_curve.png
-!outputs/20261106_192805_162795_optimize-composite/best_heatmap.png
-!outputs/20261106_192805_162795_optimize-composite/composite_schedule.json
-!outputs/20261112_163858_154311_optimize-composite/
-outputs/20261112_163858_154311_optimize-composite/*
-!outputs/20261112_163858_154311_optimize-composite/loss_curve.png
-!outputs/20261112_163858_154311_optimize-composite/best_heatmap.png
+!outputs/20261112_164230_528331_optimize-composite/
+outputs/20261112_164230_528331_optimize-composite/*
+!outputs/20261112_164230_528331_optimize-composite/README.md
+!outputs/20261112_164230_528331_optimize-composite/run_review.json
+!outputs/20261112_164230_528331_optimize-composite/history.csv
+!outputs/20261112_164230_528331_optimize-composite/loss_curve.png
+!outputs/20261112_164230_528331_optimize-composite/best_heatmap.png
+!outputs/20261112_164230_528331_optimize-composite/optimizer_diagnostics.png
+!outputs/20261112_164230_528331_optimize-composite/epoch_0723_direction_001_plus.npz
+!outputs/20261112_164230_528331_optimize-composite/checkpoint_latest.npz
 generated/
 .env
 configs/lab.local.json

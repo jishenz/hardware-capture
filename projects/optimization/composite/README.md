@@ -130,8 +130,9 @@ This fidelity is computed from captured RF and the spin model.
 
 `history.csv` plots accepted centers (or retained previous measurements after a
 rejection) and the best passing candidate. Probe robustness losses and penalized
-search losses are separate columns. Every trial has its own measurement archive;
-`epoch_NNNN_acceptance.json` records trial scales and decisions. Checkpoints
+search losses are separate columns. Every trial has a compact capture-log entry.
+`acceptance.jsonl` records trial scales and decisions (individual
+`epoch_NNNN_acceptance.json` files in full recording mode). Checkpoints
 include the accepted center's measurement path and fidelity.
 
 The acceptance settings are enabled in this project's preset, including its
@@ -155,9 +156,9 @@ or advance the last complete checkpoint.
 
 ### Runtime and progress
 
-Each candidate prints stage starts and elapsed times and writes
-`<candidate>_timing.json`, including the current stage before blocking work.
-Stages separate upload/readback, acquisition plus scope transfer, raw saving,
+Each candidate prints stage starts and elapsed times. Selected recording keeps
+timings in `captures.jsonl`; full recording also writes `<candidate>_timing.json`.
+Stages separate upload/readback, acquisition plus scope transfer, optional raw saving,
 completion wait, demodulation, calibration, loss evaluation, and reduced saving.
 A stage marked `running` in an interrupted run does not establish device state.
 Progress is reported only at stage start and exit, with no periodic heartbeat
@@ -242,14 +243,28 @@ establish hardware performance. The preset requests 4000 updates.
 
 ## Output
 
-Each run creates a timestamped output folder containing:
+Each run creates a timestamped output folder. The default
+`composite.capture_retention="selected"` processes scope arrays directly in RAM;
+routine probes and rejected trials never write raw or reduced waveform archives.
+There is no save-and-reload step. Only the most promising feasible probe's
+waveforms remain in RAM during an update, alongside the active measurement.
+Temporary waveform arrays are released after selection and persistence.
+
+Selected recording retains:
 
 - `epoch_0000.npz` and `epoch_0000_raw.npz`: the initial measured seed.
-- `epoch_NNNN_direction_DDD_plus/minus.npz` and corresponding `_raw.npz`:
-  each probe's raw RF, corrected targets, mean and complex standard deviation,
-  per-pair calibration, command parameters, loss, fidelity grid, and scan axes.
-- `epoch_NNNN_spsa.npz`: center, signs, scales, plus/minus parameters and losses,
-  capture order, and the mean full-loss gradient.
+- `best_measured_0/1.npz` and corresponding `_raw.npz`: two alternating
+  slots for the best passing candidate, written only when the selected best
+  changes after a complete update.
+- `latest_center_0/1.npz`: two alternating reduced-measurement slots for accepted
+  centers when fidelity acceptance is enabled, written only on a change.
+  While the seed is still best or current, its existing archive is referenced
+  directly instead of writing duplicate best/center files.
+- `captures.jsonl`: compact loss, search loss, nominal fidelity, per-pair
+  calibration, stage timings, and errors for every attempted capture.
+- `acceptance.jsonl`: trial identities, fidelities, scales, and acceptance decisions.
+- `failed_capture_raw.npz` and, when available, `failed_capture.npz`: one
+  failure-evidence slot. An evidence-write error does not replace the original error.
 - `final_verification.npz`, `final_verification_002.npz`,
   `final_verification_003.npz`, and their `_raw.npz` files: independent captures
   after restoring the best passing candidate. Summary reports all verification
@@ -268,14 +283,35 @@ Each run creates a timestamped output folder containing:
   Legacy unconstrained checkpoints mark the proposed center as unmeasured.
   Old amplitude-space checkpoints are not interchangeable; automatic resume
   remains unsupported.
-- `history.csv`, `checkpoint_latest.npz` after updates, `best_heatmap.png`, and
-  summary/result JSON.
+- `history.csv` (appended after each update), `checkpoint_latest.npz`, plots, and
+  summary/result JSON. The checkpoint includes the latest gradient and best
+  parameters as well as the optimizer state. Archives and checkpoints use a
+  temporary file followed by replacement, preserving the previous file if writing fails.
+  Alternating evidence slots preserve the previous checkpoint's references until
+  the new checkpoint is committed. The checkpoint/summary identifies the current slots.
+  Plots refresh initially, every 25 updates, and during final verification;
+  `--plot-only` can regenerate the loss curve from the complete CSV at any time.
   All fidelity heatmaps use a fixed color bar from 0.99 (bottom) to 1.00 (top),
   including optimizer diagnostics. Values below 0.99 use the lowest color;
   saved fidelity arrays and objective calculations retain their full values.
 - Best measured candidate exported as `pulse.csv`, pulse metadata, and TNMR
   amplitude/phase text tables. A successful live run leaves those best tables
   loaded; it does not save or rewrite the source TNT.
+
+The number of retained waveform archives is bounded independently of the number
+of updates (and grows with the configured final-verification count). Compact
+logs still grow with captures. Rolling best/center slots contain the original
+`measurement_id`; checkpoint IDs identify the corresponding measurement.
+Historical routine rows have an empty `measurement_path`, rather than a path
+to an archive that was never written. Discarded captures cannot be reprocessed
+later under different demodulation or calibration settings.
+
+For a diagnostic run requiring every waveform, explicitly choose
+`composite.capture_retention="all"`. This restores per-probe and per-trial
+raw/reduced archives, `epoch_NNNN_spsa.npz`, individual timing and acceptance
+files, and plots after every update. It can require hundreds of gigabytes.
+The retention policy does not change calibration, objective, SPSA, Adam,
+fidelity acceptance, or final verification. Automatic resume remains unsupported.
 
 ## Assumptions
 
